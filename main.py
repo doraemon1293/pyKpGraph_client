@@ -45,6 +45,7 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def init(self):
         self.mongo_client = pymongo.MongoClient(MONGO_CLIENT_URL)
+        self.special_legend_title=set()
         self.cell_line_edit_autocompleter = QtWidgets.QCompleter()
         self.cell_line_edit_autocompleter_model = QtGui.QStandardItemModel()
         self.cell_line_edit_autocompleter.setModel(self.cell_line_edit_autocompleter_model)
@@ -95,6 +96,13 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     kpi_name, agg = row[0].value, row[1].value
                     kpi_name = kpi_name.replace(".", "_")
                     self.agg_function[kpi_name] = agg
+
+            #load the charts who use special legend configuration
+            if ws.title=="special_legend_title":
+                for row in ws.rows:
+                    self.special_legend_title.add(row[0].value)
+
+
 
             # load charts tab config
             # self.charts_config 为3层级的字典
@@ -238,7 +246,7 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 for tab2_name in self.charts_config.get(tab1_name,{}):
                     sc = tab1.findChild(mpl_cls.ScrollaleChartsArea, tab2_name)
                     configs = self.charts_config[tab1_name][tab2_name]
-                    sc.plot(configs, df, GP, column_value, time_col)
+                    sc.plot(configs, df, GP, column_value, time_col,self.special_legend_title)
                 self.statusbar.showMessage("{} {} query finished".format(column_value, tab1_name, 60000))
             else:
                 self.statusbar.showMessage("{} doesn't have data".format(column_value))
@@ -262,7 +270,7 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.start_date_edit.show()
             self.end_date_edit.show()
 
-    # autocomplet on cell line edit
+    # autocomplete on cell line edit
     def on_cell_line_edit_textEdited(self, s):
         COLLETION_NAME = None
         arr = []
@@ -280,7 +288,7 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         for text in arr:
             self.cell_line_edit_autocompleter_model.appendRow(QtGui.QStandardItem(text))
 
-    # autocomplet on site line edit
+    # autocomplete on site line edit
     def on_site_line_edit_textEdited(self, s):
         COLLETION_NAME = None
         arr = []
