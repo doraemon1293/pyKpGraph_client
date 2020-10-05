@@ -30,7 +30,7 @@ class My_test_main_window(QtWidgets.QMainWindow):
         dr = pd.date_range(start=datetime.datetime(2020, 7, 23),
                            end=datetime.datetime(2020, 7, 23, 12, 0), freq="H")
         self.data_df = pd.DataFrame({"Cell Name": ["cell1"] * len(dr),
-                                     "Time": dr,
+                                     "Date": dr,
                                      "A": [math.sin(x) for x in range(1, len(dr) + 1)],
                                      "B": [x * 2 for x in range(1, len(dr) + 1)],
                                      "stack1": [x for x in range(1, len(dr) + 1)],
@@ -66,14 +66,14 @@ class My_test_main_window(QtWidgets.QMainWindow):
                 df = df.apply(util.compile_formula_in_df, axis=1)
                 self.charts_config = df
 
-            if ws.title == "small_legend_config":
-                df = pd.read_excel(filename, sheet_name=ws.title)
-                self.small_legend_config = {}
-                for _, row in df.iterrows():
-                    self.small_legend_config[row["Parameter"]] = row["Value"]
-                self.small_legend_config["bbox_to_anchor"] = eval(self.small_legend_config["bbox_to_anchor"])
-                self.small_legend_config["ncol"] = int(self.small_legend_config["ncol"])
-                self.small_legend_config["fontsize"] = str(self.small_legend_config["fontsize"])
+            # if ws.title == "small_legend_config":
+            #     df = pd.read_excel(filename, sheet_name=ws.title)
+            #     self.small_legend_config = {}
+            #     for _, row in df.iterrows():
+            #         self.small_legend_config[row["Parameter"]] = row["Value"]
+            #     # self.small_legend_config["bbox_to_anchor"] = eval(self.small_legend_config["bbox_to_anchor"])
+            #     # self.small_legend_config["ncol"] = int(self.small_legend_config["ncol"])
+            #     self.small_legend_config["fontsize"] = str(self.small_legend_config["fontsize"])
 
     # def gen_df(self):
     #     project={'N_RA_Dedicated_Msg3', 'N_ThpTime_UE_UL_RmvSmallPkt(microsecond)', 'N_DL_Pwr_Max(dBm)',
@@ -125,6 +125,6 @@ if __name__ == "__main__":
     sc = ScrollaleChartsArea(my_test_main_window)
     my_test_main_window.setCentralWidget(sc)
     my_test_main_window.show()
-    sc.plot(my_test_main_window.charts_config, my_test_main_window.data_df, column_value="lalala", time_col="Time",
-            small_legend_config=my_test_main_window.small_legend_config)
+    sc.plot(my_test_main_window.charts_config, my_test_main_window.data_df, data_level="Cell",column_value="lalala",
+            time_col="Date")
     sys.exit(app.exec_())

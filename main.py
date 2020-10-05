@@ -80,8 +80,8 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.start_date_edit.setDateTime(QtCore.QDateTime.fromString('2020/7/23', 'yyyy/M/d'))
         self.end_date_edit.setDateTime(QtCore.QDateTime.fromString('2020/7/29', 'yyyy/M/d'))
 
-        self.cell_line_edit.setText("12723NAn781")
-        self.site_line_edit.setText("12723N")
+        self.cell_line_edit.setText("12330A80")
+        self.site_line_edit.setText("12330")
         self.scrollaleChartsAreas = {}
         self.sub_tabs = {}
 
@@ -125,19 +125,18 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.auto_completer_Config = self.auto_completer_Config.set_index(["tab_name", "data_level"])
             if ws.title == "query_config":
                 self.query_config = pd.read_excel(filename, sheet_name=ws.title)
-            if ws.title == "small_legend_config":
-                df = pd.read_excel(filename, sheet_name=ws.title)
-                self.small_legend_config = {}
-                for _, row in df.iterrows():
-                    self.small_legend_config[row["Parameter"]] = row["Value"]
-                self.small_legend_config["bbox_to_anchor"] = eval(self.small_legend_config["bbox_to_anchor"])
-                self.small_legend_config["ncol"] = int(self.small_legend_config["ncol"])
-                self.small_legend_config["fontsize"] = str(self.small_legend_config["fontsize"])
+            # if ws.title == "small_legend_config":
+            #     df = pd.read_excel(filename, sheet_name=ws.title)
+            #     self.small_legend_config = {}
+            #     for _, row in df.iterrows():
+            #         self.small_legend_config[row["Parameter"]] = row["Value"]
+            #     # self.small_legend_config["bbox_to_anchor"] = eval(self.small_legend_config["bbox_to_anchor"])
+            #     # self.small_legend_config["ncol"] = int(self.small_legend_config["ncol"])
+            #     self.small_legend_config["fontsize"] = str(self.small_legend_config["fontsize"])
 
 
     def build_tab_widgets(self):
-        ''' build tab_level1 as per template 小时级和天极只建一个tab
-
+        '''
         :return:
         '''
 
@@ -192,6 +191,7 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             sc.recreate()
 
     def on_query_push_btn_clicked(self):
+        #todo 2g cluster layer
         if self.cell_radio_btn.isChecked():
             data_level = "Cell"
             column_value = self.cell_line_edit.text().strip()
@@ -229,11 +229,9 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 #get data
                 for tab2_name in config_df["Tab"].unique():
                     self.scrollaleChartsAreas[tab1_name, tab2_name].recreate()
-                    # tab1.findChild(mpl_cls.ScrollaleChartsArea, tab2_name).recreate()
                 for kpis in config_df["Kpis"]:
                     for kpi in kpis:
                         project.add(kpi)
-                # print(project)
 
                 data_collector = db_operator.Data_collector(MONGO_CLIENT_URL=self.MONGO_CLIENT_URL, tech=tech,
                                                             data_level=data_level, time_level=time_level,
@@ -255,48 +253,9 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     for tab2_name in config_df["Tab"].unique():
                         tab_config_df=config_df[config_df["Tab"]==tab2_name]
                         sc=self.scrollaleChartsAreas[tab1_name,tab2_name]
-                        sc.plot(tab_config_df,data_collector.final_df,data_level,column_value,time_col,self.small_legend_config)
+                        sc.plot(tab_config_df,data_collector.final_df,data_level,column_value,time_col)
                     self.statusbar.showMessage("Query finished")
-            #
-            #
-            #
-            # if query_level == "cell":
-            #     column_name = "Cell Name"
-            #     column_value = self.cell_line_edit.text().strip()
-            #
-            # if query_level == "site":
-            #     if tab1_name.startswith("HUAWEI5G"):
-            #         column_name = "gNodeB Name"  # todo need to consider 2/3/4G
-            #         column_value = self.site_line_edit.text().strip()  # todo need to consider 2/3/4G
-            # # todo cluster
-            #
-            # myclient = pymongo.MongoClient(MONGO_CLIENT_URL)
-            # col = myclient[DB_NAME][collection_name]
-            #
-            # project[time_col] = 1
-            # project[column_name] = 1
-            # query = {column_name: column_value,
-            #          time_col: {"$gte": st, "$lte": end}}
-            # res = list(col.find(query, project))
-            # if res:
-            #     df = pd.DataFrame(res)
-            #     df["GP"] = GP
-            #     if query_level == "site":
-            #         for kpi in set(agg):
-            #             if kpi not in df.columns:
-            #                 del agg[kpi]
-            #                 print("missing {} in databse for {}".format(kpi, column_value))
-            #         df = df.groupby([time_col, column_name], as_index=False).agg(agg)
-            #
-            #     for tab2_name in self.charts_config.get(tab1_name,{}):
-            #         sc = tab1.findChild(mpl_cls.ScrollaleChartsArea, tab2_name)
-            #         configs = self.charts_config[tab1_name][tab2_name]
-            #         sc.plot(configs, df, GP, column_value, time_col,self.special_legend_title)
-            #     self.statusbar.showMessage("{} {} query finished".format(column_value, tab1_name, 60000))
-            # else:
-            #     self.statusbar.showMessage("{} doesn't have data".format(column_value))
-            #     # todo cluster
-            # myclient.close()
+
 
     def on_tabwidget_level1_currentChanged(self, i):
         tab_name = self.tabwidget_level1.widget(i).objectName()

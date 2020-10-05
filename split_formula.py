@@ -23,8 +23,16 @@ for row in ws.rows:
                 formula, kpi_name = x.split(" as ")
                 formula = formula.strip()
                 kpi_name = kpi_name.strip()
+            elif " AS " in x:
+                formula, kpi_name = x.split(" AS ")
+                formula = formula.strip()
+                kpi_name = kpi_name.strip()
+            elif " As " in x:
+                formula, kpi_name = x.split(" As ")
+                formula = formula.strip()
+                kpi_name = kpi_name.strip()
             else:
                 formula = x
                 kpi_name = None
             write_ws.append([tab, chart_no, chart_title, kpi_name, None, None, None, formula])
-write_wb.save("1.xlsx")
+write_wb.save("2.xlsx")

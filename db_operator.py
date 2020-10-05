@@ -6,10 +6,20 @@ import util
 
 pd.options.display.max_columns = None
 pd.options.display.max_rows = None
+MONGO_CLIENT_URL = "mongodb://localhost:27017/"
+EP_DB_NAME = "EP"
+LTE_EP_COL_NAME = "LTE_EP"
 
 
-def calc_bandwidth(row):
-    return 20
+def get_bandwidth_layer(row):
+    myclient = pymongo.MongoClient(MONGO_CLIENT_URL)
+    mydb = myclient[EP_DB_NAME]
+    mycol = mydb[LTE_EP_COL_NAME]
+    d = mycol.find_one({"_id": row["Cell Name"]})
+    row["bandwidth"] = d["bandwidth"]
+    row["layer"] = d["layer"]
+    myclient.close()
+    return row
 
 
 class Data_collector():
@@ -29,6 +39,7 @@ class Data_collector():
         self.query_config = query_config
 
     def query_data(self):
+        # todo 2g cluster
         self.set_parameters()
         for index, row in self.additional_kpi.iterrows():
             if self.tech in row["tech"] and self.data_level in row["data_level"] and self.time_level in row[
@@ -79,22 +90,6 @@ class Data_collector():
                 for key_value in self.key_values:
                     # print(self.db_name, collection_name, self.key_col, repr(key_value), project)
                     for doc in mycol.find({self.key_col: key_value}, project):
-                        # # remove duplicate
-                        # h = get_hash_val(doc)
-                        # if h in results_hash_set:
-                        #     print("{} in {} is removed".format(doc["_id"], collection_name))
-                        #     print("removed doc is".format(doc))
-                        #     mycol.remove_one({"_id": doc["_id"]})
-                        # else:
-                        #     results_hash_set.add(h)
-                        #     doc={[(for k in self.project]}
-                        # if self.tech == "4G" and self.time_level == "Daily":
-                        #     # todo add bandwidth for 4G/daily
-                        #     if "Cell Name" in doc:
-                        #         doc["bandwidth"] = 20
-                        #         if doc["bandwidth"] == 20:
-                        #             doc["UL_Thr_target"] = 0.5
-                        #             doc["DL_Thr_target"] = 8
                         results.append(doc)
         myclient.close()
         return results
@@ -113,16 +108,20 @@ class Data_collector():
         df1 = pd.DataFrame(res_without_cell_name.values())
         if df.empty:
             return df
+        df["cell_number"]=len(df["Cell Name"].unique())
 
         # add bandwidth
         if self.tech == "4G" and self.time_level == "Daily":
-            df["bandwidth"] = df.apply(lambda row: calc_bandwidth(row), axis=1)
+            df = df.apply(get_bandwidth_layer, axis=1)
 
         # add additional kpi
         for index, row in self.additional_kpi.iterrows():
             if self.tech in row["tech"] and self.data_level in row["data_level"] and self.time_level in row[
                 "time_level"]:
                 df[row["kpi_name"]] = eval(row["Formula"])
+                # if row["kpi_name"]=="DL_Spec_Eff_den":
+                #     print(df["DL_Spec_Eff_den"],df['L_Thrp_Time_Cell_DL(s)'],df['L_ChMeas_PRB_DL_Used_Avg'],
+                #     df['bandwidth'])
 
         # add gp
         df["GP"] = self.gp
@@ -132,6 +131,7 @@ class Data_collector():
             if self.tech in row["tech"] and self.data_level in row["data_level"] and self.time_level in row[
                 "time_level"]:
                 df.loc[df[row["condition_kpi"]] == row["condition_value"], row["kpi_name"]] = eval(row["Formula"])
+
         # aggregate
         if self.data_level == "Cell":
             return df
@@ -185,55 +185,3 @@ if __name__ == "__main__":
                                  )
     db_operator.query_data()
     print(db_operator.final_df)
-    # if "Hourly" in tab1_name:
-    #     time_col = "Time"
-    #     GP = 3600
-    #     st = self.start_date_time_edit.dateTime().toPyDateTime()
-    #     end = self.end_date_time_edit.dateTime().toPyDateTime()
-    #     if tab1_name.startswith("HUAWEI5G"):
-    #         collection_name = "NR_CELLS_HOURLY"
-    # if "Daily" in tab1_name:
-    #     time_col = "Date"
-    #     GP = 3600 * 24
-    #     st = self.start_date_edit.dateTime().toPyDateTime()
-    #     end = self.end_date_edit.dateTime().toPyDateTime()
-    #     if tab1_name.startswith("HUAWEI5G"):
-    #         collection_name = "NR_CELLS_DAILY"
-    #
-    # if query_level == "cell":
-    #     column_name = "Cell Name"
-    #     column_value = self.cell_line_edit.text().strip()
-    #
-    # if query_level == "site":
-    #     if tab1_name.startswith("HUAWEI5G"):
-    #         column_name = "gNodeB Name"  # todo need to consider 2/3/4G
-    #         column_value = self.site_line_edit.text().strip()  # todo need to consider 2/3/4G
-    # # todo cluster
-    #
-    # myclient = pymongo.MongoClient(MONGO_CLIENT_URL)
-    # col = myclient[db_name][collection_name]
-    #
-    # project[time_col] = 1
-    # project[column_name] = 1
-    # query = {column_name: column_value,
-    #          time_col: {"$gte": st, "$lte": end}}
-    # res = list(col.find(query, project))
-    # if res:
-    #     df = pd.DataFrame(res)
-    #     df["GP"] = GP
-    #     if query_level == "site":
-    #         for kpi in set(agg):
-    #             if kpi not in df.columns:
-    #                 del agg[kpi]
-    #                 print("missing {} in databse for {}".format(kpi, column_value))
-    #         df = df.groupby([time_col, column_name], as_index=False).agg(agg)
-    #
-    #     for tab2_name in self.charts_config.get(tab1_name, {}):
-    #         sc = tab1.findChild(mpl_cls.ScrollaleChartsArea, tab2_name)
-    #         configs = self.charts_config[tab1_name][tab2_name]
-    #         sc.plot(configs, df, GP, column_value, time_col, self.special_legend_title)
-    #     self.statusbar.showMessage("{} {} query finished".format(column_value, tab1_name, 60000))
-    # else:
-    #     self.statusbar.showMessage("{} doesn't have data".format(column_value))
-    #     # todo cluster
-    # myclient.close()

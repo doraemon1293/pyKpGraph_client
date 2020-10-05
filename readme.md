@@ -5,6 +5,12 @@ date: '2020-09-14'
 ---
 
 # 项目进度
+
+### 1005
+- Audit 4g cell & site / day & hour charts
+- add special function to deal with charts with special requirments
+- finish task in todo list
+
 ### 0915
 - Audit 5g cell & site / day & hour charts
 
@@ -15,7 +21,7 @@ date: '2020-09-14'
 - 重新设计得了数据的结构和 完成了重写 服务器/客户端 所有与数据库操作相关的代码 并测试确认效率满足需求
 
 ### 0828
--  测试服务器端上传数据 效率过低 需要重写
+- 测试服务器端上传数据 效率过低 需要重写
 
 ### 0825
 - 4G Hour/Daily template
@@ -88,16 +94,18 @@ date: '2020-09-14'
 - 服务器Mongodb搭建
 
 # Todo
-- [ ] Tomorrow: 读取ep添加带宽+layer 信息
+- [ ] 读取ep添加带宽+layer 信息
 - [ ] Add Export charts function
 - [ ] Compose template for 2G/4G
 - [ ] Keep cell name & site for different tab
-- [ ] 添加支持某些图片只在特定query level下显示的功能
 - [ ] 添加Cluster支持
 - [ ] 添加Layer支持
-- [ ] 根据query对象的带宽动态判断 DL/UL THrp (5:0.5/2 10:0.35/4 15:0.5/6 20:0.5/8)
-- [ ] 根据query对象的tech动态判断 SDR (800 0.45 非800 0.2)
 
+
+
+- [x] 根据query对象的带宽动态判断 DL/UL THrp (5:0.5/2 10:0.35/4 15:0.5/6 20:0.5/8)
+- [x] 根据query对象的tech动态判断 SDR (800 0.45 非800 0.2)
+- [x] 添加支持某些图片只在特定query level下显示的功能
 - [x] Overall chars: PUSCH MCS - overall / PDSCH MCS - overall
 - [x] 检查关于GP的公式 4g hour (gp agg 要改成sum)
 - [x] 根据小区带宽画图: DL Spec Eff  / UL Spec Eff 
@@ -112,13 +120,13 @@ date: '2020-09-14'
 - [x] NaN value will clipping x axis at the beginning or end
   - Solution : https://stackoverflow.com/questions/34816098/matplotlib-how-to-plot-date-without-clipping-nan-at-the-beginning-and-end
 - [x] unavail rate 需要考虑数据行数
-- [x] 修正bar图ovelap的问题: https://stackoverflow.com/questions/46175808/python-matplotlib-bars-overlapping-although-width-1
+- [x] 修正bar图overlap的问题: https://stackoverflow.com/questions/46175808/python-matplotlib-bars-overlapping-although-width-1
 
 # Audit
 |         | 2G_Hour | 2G_Daily | 4G_Hour | 4G_Daily | 5G_Hour | 5G_Daily |
 |:-------:|:-------:|:--------:|:-------:|:--------:|:-------:|:--------:|
-|   cell  |         |          |         |          |    X    |    X     |
-|   site  |         |          |         |          |    X    |    X     |
+|   cell  |         |          |     X   |      X   |    X    |    X     |
+|   site  |         |          |     X   |      X   |    X    |    X     |
 | cluster |         |          |         |          |         |          |
 |  layer  |         |          |         |          |    -    |     -    |
 

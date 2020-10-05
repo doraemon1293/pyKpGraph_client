@@ -10,7 +10,7 @@ import numpy as np
 import traceback
 from PyQt5 import QtWidgets
 import matplotlib.dates as mdates
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg#, NavigationToolbar2QT as NavigationToolbar
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg  # , NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5 import NavigationToolbar2QT as NavigationToolbar
 import db_operator
@@ -24,10 +24,10 @@ CHARTS_TAB_NAMES = {"HUAWEI2G_Hourly_tab", "HUAWEI2G_Daily_tab", "HUAWEI4G_Hourl
                     "HUAWEI5G_Hourly_tab", "HUAWEI5G_Daily_tab"}
 MONGO_CLIENT_URL = "mongodb://localhost:27017/"
 
-GENERAL_LEGEND_CONFIG_LEFT = {"loc": "upper left", "bbox_to_anchor": (-0.15, 1.15), "frameon": False,
-                              "fontsize": "small"}
-GENERAL_LEGEND_CONFIG_RIGHT = {"loc": "upper right", "bbox_to_anchor": (1, 1.15), "frameon": False, "fontsize": "small"}
-
+GENERAL_LEGEND_CONFIG_LEFT = {"loc": "upper left", "bbox_to_anchor": (0, 1.1), "frameon": False, "fontsize": 10}
+GENERAL_LEGEND_CONFIG_RIGHT = {"loc": "upper right", "bbox_to_anchor": (1, 1.1), "frameon": False, "fontsize": 10}
+TITLE_PAD = 23
+SMALLE_LEGEND_FONT_SIZE = 6
 
 
 class MplCanvas(FigureCanvasQTAgg):
@@ -76,14 +76,15 @@ class ScrollaleChartsArea(QtWidgets.QScrollArea):
         self.config = self.config_df[self.config_df["Chart_no"] == self.chart_no]
         if "Special_chart" in self.config.columns and pd.notnull(self.config["Special_chart"].unique()[0]):
             self.special_chart = True
-            self.function_name=self.config["Special_chart"].unique()[0]
+            self.function_name = self.config["Special_chart"].unique()[0]
         else:
             self.special_chart = False
-        if "Small_legend" in self.config.columns and self.config["Small_legend"].unique()[0] == True:
-            self.small_legend = True
-        else:
-            self.small_legend = False
-        if self.time_col=="Time" or "Wide_chart" in self.config.columns and self.config["Wide_chart"].unique()[0] == True:
+        # if "Small_legend" in self.config.columns and self.config["Small_legend"].unique()[0] == True:
+        #     self.small_legend = True
+        # else:
+        #     self.small_legend = False
+        if self.time_col == "Time" or "Wide_chart" in self.config.columns and self.config["Wide_chart"].unique()[
+            0] == True:
             width_chart = True
         else:
             width_chart = False
@@ -96,51 +97,60 @@ class ScrollaleChartsArea(QtWidgets.QScrollArea):
         else:
             self.not_for_cell_level = False
 
-
-        self.title = self.config["Chart_tile"].unique()[0]
+        self.title = self.config["Chart_title"].unique()[0]
 
         rect = QtWidgets.QApplication.desktop().screenGeometry()
         height = rect.height() // 2 - 50
 
         if width_chart:
             width = rect.width() - 100
-            if self.grid_column==1:
-                self.grid_row+=1
-                self.grid_column=0
-            self.gridlayout.addWidget(self.widget, self.grid_row,self.grid_column,1,2)
-            self.grid_row+=1
-            self.grid_column=0
+            if self.grid_column == 1:
+                self.grid_row += 1
+                self.grid_column = 0
+            self.gridlayout.addWidget(self.widget, self.grid_row, self.grid_column, 1, 2)
+            self.grid_row += 1
+            self.grid_column = 0
         else:
             width = rect.width() // 2 - 50
-            self.gridlayout.addWidget(self.widget, self.grid_row,self.grid_column)
-            self.grid_column+=1
-            if self.grid_column==2:
-                self.grid_row+=1
-                self.grid_column=0
+            self.gridlayout.addWidget(self.widget, self.grid_row, self.grid_column)
+            self.grid_column += 1
+            if self.grid_column == 2:
+                self.grid_row += 1
+                self.grid_column = 0
         self.widget.setFixedWidth(width)
         self.widget.setFixedHeight(height)
         self.ax1 = self.widget.canvas.fig.add_subplot(111)
-        self.ax1.set_title("{} , {}".format(self.title, self.column_value))
-        if self.not_for_cell_level and self.data_level=="Cell":
-            self.ax1.set_title("{} , {}".format(self.title, "Not for cell level"))
+        self.ax1.ticklabel_format(useOffset=False)
+        self.ax1.set_title("{} , {}".format(self.title, self.column_value), pad=TITLE_PAD)
+        if self.not_for_cell_level and self.data_level == "Cell":
+            self.ax1.set_title("{} , {}".format(self.title, "Not for cell level"), pad=TITLE_PAD)
             return False
 
         self.ax1.grid(axis='y')
         self.ax1.set_axisbelow(True)
+        self.ax1.ticklabel_format(style='plain', useOffset=False)
         self.left_count = len(self.config[self.config["Axis"] == "Left"])
         self.right_count = len(self.config[self.config["Axis"] == "Right"])
+        if "Unit" in self.config.columns:
+            if self.left_count:
+                self.left_unit = self.config[self.config["Axis"] == "Left"]["Unit"].unique()[0]
+                if pd.isnull(self.left_unit):
+                    self.left_unit = ""
+
+            if self.right_count:
+                self.right_unit = self.config[self.config["Axis"] == "Right"]["Unit"].unique()[0]
+                if pd.isnull(self.right_unit):
+                    self.right_unit = ""
+
         self.bottom = 0
         self.group_bar_no = self.config[self.config["Chart_type"] == "GroupBar"].shape[0]
         self.bar_width = 0.8 if self.time_col == "Date" else 0.8 / 24
-        if self.left_count:
-            self.left_percent=self.config[self.config["Axis"]=="Left"]["Percent"].unique()[0]
-        if self.right_count:
-            self.right_percent=self.config[self.config["Axis"]=="Right"]["Percent"].unique()[0]
+
         if self.group_bar_no:
             self.group_bar_width = self.bar_width / self.group_bar_no
-            self.group_bar_delta =range(1,self.group_bar_no+1)
+            self.group_bar_delta = range(1, self.group_bar_no + 1)
             self.x = mdates.date2num(self.data_df[self.time_col])
-            self.group_bar_x=[v-self.bar_width/2+self.group_bar_width/2 for v in self.x]
+            self.group_bar_x = [v - self.bar_width / 2 + self.group_bar_width / 2 for v in self.x]
         else:
             self.x = self.data_df[self.time_col]
         if self.right_count > 0:
@@ -151,18 +161,31 @@ class ScrollaleChartsArea(QtWidgets.QScrollArea):
             self.ax1.grid(False)
             self.ax2.grid(axis='y')
             self.ax2.set_axisbelow(True)
+            self.ax2.ticklabel_format(style='plain', useOffset=False)
+
+        if self.left_count:
+            self.ax1.set_ylabel(self.left_unit)
+        if self.right_count:
+            self.ax2.set_ylabel(self.right_unit)
         return True
 
     def plot_line(self):
         color = 0
         df = self.data_df
         if self.overall_chart:
-            x=[]
-            y=[]
-            for index,row in self.config.iterrows():
-                x.append(row["Kpi_name"])
-                y.append(np.sum(self.data_df[row["Kpi_name"]]))
-            self.ax1.bar(x,y)
+            x = []
+            y = []
+            for index, row in self.config.iterrows():
+
+                df = self.data_df
+                sum_df = pd.Series()
+                for kpi in row["Kpis"]:
+                    sum_df[kpi] = np.sum(df[kpi])
+                df = sum_df
+                x.append(row["Legend_label"])
+                y.append(eval(row["Formula"]))
+            self.ax1.bar(x, y, tick_label=[str(label) for label in x])
+
         else:
             for index, row in self.config.iterrows():
                 plot_para = {"label": row["Legend_label"]}
@@ -176,20 +199,18 @@ class ScrollaleChartsArea(QtWidgets.QScrollArea):
 
                 try:
                     df[row["Kpi_name"]] = eval(row["Formula"])
-                    if row["Kpi_name"]=="SgNB_Setup_SR_eNBR":
-                        print("lalala")
+
                 except (KeyError, SyntaxError, TypeError, ValueError, NameError) as e:
                     print("wrong formula")
                     print(row["Kpi_name"], row["Formula"])
                     print(type(e), e)
                     # traceback.print_exc()
                     df[row["Kpi_name"]] = float('nan')
-                    self.ax1.set_title("{} , {}".format(row["Chart_tile"],"wrong formula"))
-
+                    # self.ax1.set_title("{} , {}".format(row["Chart_tile"],"wrong formula"))
 
                 y = self.data_df[row["Kpi_name"]]
                 if row["Chart_type"] == "Line":
-                    plot_para["marker"]="."
+                    plot_para["marker"] = "."
                     ax.plot(self.x, y, **plot_para)
                 elif row["Chart_type"] == "Dotted line":
                     plot_para["ls"] = "--"
@@ -208,7 +229,7 @@ class ScrollaleChartsArea(QtWidgets.QScrollArea):
                     plot_para["align"] = "center"
                     plot_para["width"] = self.group_bar_width
                     ax.bar(self.group_bar_x, y, **plot_para)
-                    self.group_bar_x = [v +self.group_bar_width for v in self.group_bar_x]
+                    self.group_bar_x = [v + self.group_bar_width for v in self.group_bar_x]
                     self.bottom += y
                 color += 1
 
@@ -217,14 +238,19 @@ class ScrollaleChartsArea(QtWidgets.QScrollArea):
             self.ax1.xaxis_date()
         if self.left_count:
             legend_para = copy.copy(GENERAL_LEGEND_CONFIG_LEFT)
-            if self.small_legend == True:
-                legend_para.update(self.small_legend_config)
-            else:
+            if self.left_count >= 4:
+                legend_para["fontsize"] = SMALLE_LEGEND_FONT_SIZE
                 legend_para["ncol"] = math.ceil(self.left_count / 2)
+            else:
+                legend_para["ncol"] = len(self.ax1.get_legend_handles_labels()[0])
             self.ax1.legend(**legend_para)
         if self.right_count:
             legend_para = copy.copy(GENERAL_LEGEND_CONFIG_RIGHT)
-            legend_para["ncol"] = math.ceil(self.right_count / 2)
+            if self.right_count >= 4:
+                legend_para["fontsize"] = SMALLE_LEGEND_FONT_SIZE
+                legend_para["ncol"] = math.ceil(self.left_count / 2)
+            else:
+                legend_para["ncol"] = len(self.ax2.get_legend_handles_labels()[0])
             self.ax2.legend(**legend_para)
         if not self.overall_chart:
             if self.time_col == "Date":
@@ -232,35 +258,31 @@ class ScrollaleChartsArea(QtWidgets.QScrollArea):
             elif self.time_col == "Time":
                 self.ax1.xaxis.set_major_formatter(mdates.DateFormatter('%d.%m %H'))
             if self.time_col == "Date":
-                self.ax1.set_xlim(min(self.data_df[self.time_col]) - datetime.timedelta(days=1),
-                                  max(self.data_df[self.time_col]) + datetime.timedelta(days=1))
+                self.ax1.set_xlim(min(self.data_df[self.time_col]) - datetime.timedelta(days=0.5),
+                                  max(self.data_df[self.time_col]) + datetime.timedelta(days=0.5))
             elif self.time_col == "Time":
-                self.ax1.set_xlim(min(self.data_df[self.time_col]) - datetime.timedelta(hours=1),
-                                  max(self.data_df[self.time_col]) + datetime.timedelta(hours=1))
+                self.ax1.set_xlim(min(self.data_df[self.time_col]) - datetime.timedelta(hours=0.5),
+                                  max(self.data_df[self.time_col]) + datetime.timedelta(hours=0.5))
             self.widget.canvas.fig.autofmt_xdate()
 
-        if self.left_percent:
-            self.ax1.yaxis.set_major_formatter(mtick.PercentFormatter())
-        if self.right_count and self.right_percent:
-            self.ax2.yaxis.set_major_formatter(mtick.PercentFormatter())
+        if self.overall_chart:
+            self.widget.canvas.fig.tight_layout(pad=0.7)
 
-        self.widget.canvas.fig.tight_layout()
-
-    def plot(self, config_df, data_df, data_level,column_value, time_col, small_legend_config):
+    def plot(self, config_df, data_df, data_level, column_value, time_col):
         self.data_df = data_df
         self.config_df = config_df
-        self.data_level=data_level
+        self.data_level = data_level
         self.column_value = column_value
         self.time_col = time_col
-        self.small_legend_config = small_legend_config
-        self.grid_row=self.grid_column=0
+        # self.small_legend_config = small_legend_config
+        self.grid_row = self.grid_column = 0
 
         for chart_no in self.config_df["Chart_no"].unique():
             self.chart_no = chart_no
-            flag=self.pre_plot()
+            flag = self.pre_plot()
             if flag:
                 if self.special_chart:
-                    getattr(special_plot, self.function_name)(self.data_df, self.ax1,self.left_percent)
+                    getattr(special_plot, self.function_name)(self.data_df, self.ax1, self.left_unit)
                 else:
                     self.plot_line()
                 self.post_plot()
