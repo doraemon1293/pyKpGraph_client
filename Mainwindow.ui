@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ui version="4.0">
+<ui version="4.0" connectslotsbyname="false">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
   <property name="geometry">
@@ -21,60 +21,25 @@
        <number>3</number>
       </property>
       <item row="1" column="1">
-       <widget class="QLineEdit" name="site_line_edit"/>
-      </item>
-      <item row="0" column="8">
-       <widget class="QTimeEdit" name="start_time_edit"/>
-      </item>
-      <item row="1" column="4">
-       <widget class="QLabel" name="label_2">
-        <property name="text">
-         <string>End</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="8">
-       <widget class="QTimeEdit" name="end_time_edit"/>
-      </item>
-      <item row="0" column="9">
-       <widget class="QPushButton" name="query_push_btn">
-        <property name="text">
-         <string>Query</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QRadioButton" name="site_radio_btn">
-        <property name="text">
-         <string>Site</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="2">
-       <widget class="QRadioButton" name="cluster_radio_btn">
-        <property name="text">
-         <string>Cluster</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="3">
-       <widget class="QLineEdit" name="cluster_line_edit"/>
-      </item>
-      <item row="0" column="4">
-       <widget class="QLabel" name="label">
-        <property name="text">
-         <string>Start</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QLineEdit" name="cell_line_edit"/>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <item>
+           <widget class="QLineEdit" name="site_line_edit"/>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_3">
+            <property name="text">
+             <string>Layer</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="layer_combo_box"/>
+          </item>
+         </layout>
+        </item>
+       </layout>
       </item>
       <item row="0" column="0">
        <widget class="QRadioButton" name="cell_radio_btn">
@@ -86,25 +51,58 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="7">
-       <widget class="QLabel" name="label_3">
+      <item row="0" column="2">
+       <widget class="QRadioButton" name="cluster_radio_btn">
         <property name="text">
-         <string>From</string>
+         <string>Cluster</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="7">
-       <widget class="QLabel" name="label_4">
+      <item row="1" column="0">
+       <widget class="QRadioButton" name="site_radio_btn">
         <property name="text">
-         <string>To</string>
+         <string>Site</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="5">
+       <widget class="QDateTimeEdit" name="end_date_time_edit"/>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLineEdit" name="cell_line_edit"/>
+      </item>
+      <item row="0" column="4">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Start</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="5">
+       <widget class="QDateTimeEdit" name="start_date_time_edit"/>
+      </item>
+      <item row="1" column="4">
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>End</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
         </property>
        </widget>
       </item>
       <item row="0" column="6">
-       <widget class="QDateEdit" name="start_date_edit"/>
+       <widget class="QPushButton" name="query_push_btn">
+        <property name="text">
+         <string>Query</string>
+        </property>
+       </widget>
       </item>
-      <item row="1" column="6">
-       <widget class="QDateEdit" name="end_date_edit"/>
+      <item row="0" column="3">
+       <widget class="QComboBox" name="cluster_combo_box"/>
       </item>
      </layout>
     </item>
@@ -182,6 +180,7 @@
     <addaction name="actionReload_Template"/>
     <addaction name="actionExport_All_CHarts_to_Excel"/>
     <addaction name="actionAbout"/>
+    <addaction name="actionCluster_Definition"/>
    </widget>
    <addaction name="menuMenu"/>
   </widget>
@@ -199,6 +198,11 @@
   <action name="actionReload_Template">
    <property name="text">
     <string>Reload Template</string>
+   </property>
+  </action>
+  <action name="actionCluster_Definition">
+   <property name="text">
+    <string>Cluster Definition</string>
    </property>
   </action>
  </widget>

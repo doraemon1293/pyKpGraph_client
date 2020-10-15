@@ -1,8 +1,9 @@
-import pandas as pd
 import pymongo
 import datetime
 import hashlib
+import numpy as np
 import util
+import pandas as pd
 
 pd.options.display.max_columns = None
 pd.options.display.max_rows = None
@@ -16,15 +17,19 @@ def get_bandwidth_layer(row):
     mydb = myclient[EP_DB_NAME]
     mycol = mydb[LTE_EP_COL_NAME]
     d = mycol.find_one({"_id": row["Cell Name"]})
-    row["bandwidth"] = d["bandwidth"]
-    row["layer"] = d["layer"]
+    if d:
+        row["bandwidth"] = d["bandwidth"]
+        row["layer"] = d["layer"]
+    else:
+        row["bandwidth"] = np.nan
+        row["layer"] = np.nan
     myclient.close()
     return row
 
 
 class Data_collector():
     def __init__(self, MONGO_CLIENT_URL, tech, data_level, time_level, start_time, end_time, project, key_values,
-                 additional_kpi, conditional_kpi, agg_function, query_config):
+                 additional_kpi, conditional_kpi, agg_function, query_config, layer, cluster):
         self.MONGO_CLIENT_URL = MONGO_CLIENT_URL
         self.tech = tech
         self.data_level = data_level
@@ -35,11 +40,12 @@ class Data_collector():
         self.additional_kpi = additional_kpi
         self.conditional_kpi = conditional_kpi
         self.agg_function = agg_function
-        self.key_values = [int(x) if x.isdigit() else x for x in key_values]
+        self.key_values = key_values
         self.query_config = query_config
+        self.layer = layer
+        self.cluster = cluster
 
     def query_data(self):
-        # todo 2g cluster
         self.set_parameters()
         for index, row in self.additional_kpi.iterrows():
             if self.tech in row["tech"] and self.data_level in row["data_level"] and self.time_level in row[
@@ -53,7 +59,8 @@ class Data_collector():
                 self.project |= set(row["Kpis"])
 
         self.query_reults = self.query_database()
-        self.final_df = self.trans_results_to_data_frame()
+        self.ori_dfs = self.trans_results_to_data_frame()
+        self.final_df = self.aggregation()
         return self.final_df
 
     def set_parameters(self):
@@ -77,9 +84,12 @@ class Data_collector():
         results = []
         # results_hash_set = set()
         project = {"Cell Name": 1,
+                   "TRXNo": 1,
                    "_id": 0,
                    self.key_col: 1,
                    self.time_col: 1,
+                   "Slot No_": 1,
+                   "Port No": 1
                    }
         for k in self.project:
             project[k] = 1
@@ -87,31 +97,82 @@ class Data_collector():
             for time_ in self.time_range:
                 collection_name = prefix + time_.strftime(self.date_format)
                 mycol = myclient[self.db_name][collection_name]
-                for key_value in self.key_values:
-                    # print(self.db_name, collection_name, self.key_col, repr(key_value), project)
-                    for doc in mycol.find({self.key_col: key_value}, project):
-                        results.append(doc)
+                for doc in mycol.find({self.key_col: {"$in": self.key_values}}, project):
+                    results.append(doc)
         myclient.close()
         return results
 
     def trans_results_to_data_frame(self):
-        res_with_cell_name = {}
-        res_without_cell_name = {}
-        for res in self.query_reults:
-            if "Cell Name" in res:
-                res_with_cell_name.setdefault((res[self.time_col], res["Cell Name"]), {})
-                util.merge_dict(res_with_cell_name[res[self.time_col], res["Cell Name"]], res)
-            else:
-                res_without_cell_name.setdefault((res[self.time_col], res[self.key_col]), {})
-                util.merge_dict(res_without_cell_name[res[self.time_col], res[self.key_col]], res)
-        df = pd.DataFrame(res_with_cell_name.values())
-        df1 = pd.DataFrame(res_without_cell_name.values())
+        if self.tech == "2G":
+            res_with_cell_name = {}
+            res_with_trx = {}
+            for res in self.query_reults:
+                if "TRXNo" in res:
+                    res_with_trx.setdefault((res[self.time_col], res["Cell Name"], res["TRXNo"]), {})
+                    util.merge_dict(res_with_trx[res[self.time_col], res["Cell Name"], res["TRXNo"]], res)
+                elif "Cell Name" in res:
+                    res_with_cell_name.setdefault((res[self.time_col], res["Cell Name"]), {})
+                    util.merge_dict(res_with_cell_name[res[self.time_col], res["Cell Name"]], res)
+                else:
+                    print("2G res with error")
+        elif self.tech == "4G":
+            res_with_cell_name = {}
+            res_with_eth = {}
+            res_with_bbu = {}
+            for res in self.query_reults:
+                if "VS_FEGE_RxMaxSpeed" in res:
+                    res_with_eth.setdefault((res[self.time_col], res["eNodeB Name"]), {})
+                    util.merge_dict(res_with_eth[res[self.time_col], res["eNodeB Name"]], res)
+                elif "VS_BBUBoard_CPULoad_Max" in res:
+                    res_with_bbu.setdefault((res[self.time_col], res["eNodeB Name"]), {})
+                    util.merge_dict(res_with_bbu[res[self.time_col], res["eNodeB Name"]], res)
+                elif "Cell Name" in res:
+                    res_with_cell_name.setdefault((res[self.time_col], res["Cell Name"]), {})
+                    util.merge_dict(res_with_cell_name[res[self.time_col], res["Cell Name"]], res)
+                else:
+                    print("4G res with error")
+        elif self.tech == "5G":
+            res_with_cell_name = {}
+            for res in self.query_reults:
+                if "Cell Name" in res:
+                    res_with_cell_name.setdefault((res[self.time_col], res["Cell Name"]), {})
+                    util.merge_dict(res_with_cell_name[res[self.time_col], res["Cell Name"]], res)
+                else:
+                    print("5G res with error")
+
+        if self.tech == "2G":
+            cell_df = pd.DataFrame(res_with_cell_name.values())
+            cell_df = self.fill_na_for_missing_row_ans_sort(cell_df, ["Cell Name"])
+            trx_df = pd.DataFrame(res_with_trx.values())
+            trx_df = self.fill_na_for_missing_row_ans_sort(trx_df, ["Cell Name", "TRXNo"])
+            return {"cell_df": cell_df, "trx_df": trx_df}
+        elif self.tech == "4G":
+            cell_df = pd.DataFrame(res_with_cell_name.values())
+            cell_df = self.fill_na_for_missing_row_ans_sort(cell_df, ["Cell Name"])
+            eth_df = pd.DataFrame(res_with_eth.values())
+            eth_df = self.fill_na_for_missing_row_ans_sort(eth_df, ["eNodeB Name", "Port No"])
+            bbu_df = pd.DataFrame(res_with_bbu.values())
+            bbu_df = self.fill_na_for_missing_row_ans_sort(bbu_df, ["eNodeB Name", "Slot No_"])
+            return {"cell_df": cell_df, "eth_df": eth_df, "bbu_df": bbu_df}
+        elif self.tech == "5G":
+            cell_df = pd.DataFrame(res_with_cell_name.values())
+            cell_df = self.fill_na_for_missing_row_ans_sort(cell_df, ["Cell Name"])
+            return {"cell_df": cell_df}
+
+    def aggregation(self):
+        if self.data_level == "Cluster":
+            for df in self.ori_dfs.values():
+                df["Cluster"] = self.cluster
+
+        df = self.ori_dfs["cell_df"]
         if df.empty:
             return df
-        df["cell_number"]=len(df["Cell Name"].unique())
+
+        # add cell number
+        df["cell_number"] = len(df["Cell Name"].unique())
 
         # add bandwidth
-        if self.tech == "4G" and self.time_level == "Daily":
+        if self.tech == "4G":
             df = df.apply(get_bandwidth_layer, axis=1)
 
         # add additional kpi
@@ -131,25 +192,77 @@ class Data_collector():
             if self.tech in row["tech"] and self.data_level in row["data_level"] and self.time_level in row[
                 "time_level"]:
                 df.loc[df[row["condition_kpi"]] == row["condition_value"], row["kpi_name"]] = eval(row["Formula"])
-
+        if self.data_level=="Cluster":
+            self.key_col = "Cluster"
         # aggregate
         if self.data_level == "Cell":
-            return df
-        elif self.data_level == "Site":
-            agg_function = {}
-            for k in df.columns:
-                if k not in ("Cell Name", self.time_col, self.key_col):
-                    if k in self.agg_function:
-                        agg_function[k] = self.agg_function[k]
-                    else:
-                        agg_function[k] = lambda x: x.sum(min_count=1)
-            df = df.groupby([self.time_col, self.key_col], as_index=False).agg(agg_function)
-            if df1.empty:
-                return df
+            if self.tech == "2G":
+                trx_df = self.ori_dfs["trx_df"]
+                df1 = self.agg_df(trx_df)
+                return self.merge_df(df, df1)
             else:
-                merged_df = df.merge(df1, how="outer", on=[self.time_col, self.key_col])
-                return merged_df
-            # todo cluster
+                return df
+        else:
+            if self.data_level == "Site" or self.data_level=="Cluster":
+                if self.tech == "2G":
+                    df = self.agg_df(df)
+                    trx_df = self.ori_dfs["trx_df"]
+                    trx_df = self.agg_df(trx_df)
+                    return self.merge_df(df, trx_df)
+
+                elif self.tech == "4G":
+                    if self.data_level=="Site" and self.layer != "All Site":
+                        df = df[df["layer"] == self.layer]
+                    df = self.agg_df(df)
+                    eth_df = self.ori_dfs["eth_df"]
+                    eth_df = self.agg_df(eth_df)
+                    bbu_df = self.ori_dfs["bbu_df"]
+                    bbu_df = self.agg_df(bbu_df)
+                    df = self.merge_df(df, eth_df)
+                    df = self.merge_df(df, bbu_df)
+                    return df
+                elif self.tech == "5G":
+                    df = self.agg_df(df)
+                    return df
+
+    def fill_na_for_missing_row_ans_sort(self, df, key_cols):
+        if df.empty:
+            return df
+        else:
+            df1 = df[key_cols].drop_duplicates()
+            df1["temp_key"] = 1
+            df2 = pd.DataFrame(self.time_range, columns=[self.time_col])
+            df2["temp_key"] = 1
+            df12 = df1.merge(df2, how="outer")
+            df = df.merge(df12, how="outer")
+            df = df.sort_values(by=self.time_col)
+            df.drop(columns="temp_key")
+            return df
+
+    def agg_df(self, df):
+        if df.empty:
+            return df
+        agg = {}
+        for k in df.columns:
+            if k not in ("Cell Name", "Site Name", "eNodeB Name", "gNodeB Name", "Date", "Time", "layer", "Cluster"):
+                if k in self.agg_function:
+                    agg[k] = self.agg_function[k]
+                else:
+                    agg[k] = lambda x: x.sum(min_count=1)
+        df = df.groupby([self.time_col, self.key_col], as_index=False).agg(agg)
+        df.sort_values(by=self.time_col, inplace=True)
+        return df
+
+    def merge_df(self, df, df1):
+        if df.empty or df1.empty:
+            return df
+        merged_df = df.merge(df1, how="outer", on=[self.time_col, self.key_col])
+        merged_df.sort_values(by=self.time_col, inplace=True)
+        return merged_df
+
+    # def sort_if_not_empty(self, df):
+    #     if not df.empty:
+    #         df.sort_values(by=self.time_col, inplace=True)
 
 
 if __name__ == "__main__":

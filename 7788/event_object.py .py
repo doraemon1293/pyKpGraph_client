@@ -1,59 +1,20 @@
-#!/usr/bin/python
-
-"""
-ZetCode PyQt5 tutorial
-
-In this example, we display the x and y
-coordinates of a mouse pointer in a label widget.
-
-Author: Jan Bodnar
-Website: zetcode.com
-"""
-
-import sys
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QWidget, QApplication, QGridLayout, QLabel
+from matplotlib.widgets import Cursor
+import numpy as np
+import matplotlib.pyplot as plt
 
 
-class Example(QWidget):
+# Fixing random state for reproducibility
+np.random.seed(19680801)
 
-    def __init__(self):
-        super().__init__()
+fig = plt.figure(figsize=(8, 6))
+ax = fig.add_subplot(111, facecolor='#FFFFCC')
 
-        self.initUI()
+x, y = 4*(np.random.rand(2, 100) - .5)
+ax.plot(x, y, 'o')
+ax.set_xlim(-2, 2)
+ax.set_ylim(-2, 2)
 
-    def initUI(self):
-        grid = QGridLayout()
+# Set useblit=True on most backends for enhanced performance.
+cursor = Cursor(ax, useblit=True, color='red', linewidth=0.1)
 
-        x = 0
-        y = 0
-
-        self.text = f'x: {x},  y: {y}'
-
-        self.label = QLabel(self.text, self)
-        grid.addWidget(self.label, 0, 0, Qt.AlignTop)
-
-        self.setMouseTracking(True)
-
-        self.setLayout(grid)
-
-        self.setGeometry(300, 300, 450, 300)
-        self.setWindowTitle('Event object')
-        self.show()
-
-    def mouseMoveEvent(self, e):
-        x = e.x()
-        y = e.y()
-
-        text = f'x: {x},  y: {y}'
-        self.label.setText(text)
-
-
-def main():
-    app = QApplication(sys.argv)
-    ex = Example()
-    sys.exit(app.exec_())
-
-
-if __name__ == '__main__':
-    main()
+plt.show()

@@ -1,9 +1,9 @@
 import sys
 import matplotlib
 matplotlib.use('Qt5Agg')
-
+import pandas as pd
 from PyQt5 import QtCore, QtGui, QtWidgets
-
+import datetime
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 
@@ -22,7 +22,9 @@ class MainWindow(QtWidgets.QMainWindow):
         super(MainWindow, self).__init__(*args, **kwargs)
 
         sc = MplCanvas(self, width=5, height=4, dpi=100)
-        sc.axes.plot([0,1,2,3,4], [10,1,20,3,40])
+        y=[10,1,20,3,40]
+        x=pd.date_range(start=datetime.datetime(2020,10,13),end=datetime.datetime(2020,10,17),freq="D")
+        sc.axes.plot(x, y)
 
         # Create toolbar, passing canvas as first parament, parent (self, the MainWindow) as second.
         toolbar = NavigationToolbar(sc, self)

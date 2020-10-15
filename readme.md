@@ -1,10 +1,25 @@
 ---
 title: 'pyKP项目进度日志'
 author: '黄炎'
-date: '2020-09-14'
+date: '2020-10-16'
 ---
 
 # 项目进度
+
+### 1015
+- cluster 完成
+- improved autocomplete performance
+
+### 1013
+- layer完成
+
+### 1012
+- 为修改显示eth port的错误重写query函数
+
+
+
+### 1009
+- Compose and audit 2G site/cell hour/day charts
 
 ### 1005
 - Audit 4g cell & site / day & hour charts
@@ -94,15 +109,20 @@ date: '2020-09-14'
 - 服务器Mongodb搭建
 
 # Todo
-- [ ] 读取ep添加带宽+layer 信息
 - [ ] Add Export charts function
-- [ ] Compose template for 2G/4G
 - [ ] Keep cell name & site for different tab
 - [ ] 添加Cluster支持
-- [ ] 添加Layer支持
+- [ ] Multi-Cell
+- [ ] Worst Cell
+- [ ] Export
+- [ ] Add change day line
+- [ ] 2G TRX TAB
+- [ ] HO/NB
 
 
-
+- [x] 添加Layer支持
+- [x] 读取ep添加带宽+layer 信息
+- [x] Compose template for 2G/4G
 - [x] 根据query对象的带宽动态判断 DL/UL THrp (5:0.5/2 10:0.35/4 15:0.5/6 20:0.5/8)
 - [x] 根据query对象的tech动态判断 SDR (800 0.45 非800 0.2)
 - [x] 添加支持某些图片只在特定query level下显示的功能
@@ -125,10 +145,10 @@ date: '2020-09-14'
 # Audit
 |         | 2G_Hour | 2G_Daily | 4G_Hour | 4G_Daily | 5G_Hour | 5G_Daily |
 |:-------:|:-------:|:--------:|:-------:|:--------:|:-------:|:--------:|
-|   cell  |         |          |     X   |      X   |    X    |    X     |
-|   site  |         |          |     X   |      X   |    X    |    X     |
-| cluster |         |          |         |          |         |          |
-|  layer  |         |          |         |          |    -    |     -    |
+|   cell  |     X    |     X    |     X   |      X   |    X    |    X     |
+|   site  |     X    |     X    |     X   |      X   |    X    |    X     |
+| cluster |    X     |     X     |    X     |      X    |    X     |   X       |
+|  layer  |    -     |    -      |     x   |      x    |    -    |     -    |
 
 # Notes
 - Qual & MCS	12	DL ReTXN Shares	QPSK 原公式错误

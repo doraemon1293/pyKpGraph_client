@@ -125,6 +125,6 @@ if __name__ == "__main__":
     sc = ScrollaleChartsArea(my_test_main_window)
     my_test_main_window.setCentralWidget(sc)
     my_test_main_window.show()
-    sc.plot(my_test_main_window.charts_config, my_test_main_window.data_df, data_level="Cell",column_value="lalala",
-            time_col="Date")
+    sc.plot(my_test_main_window.charts_config, my_test_main_window.data_df, data_level="Cell", column_value="lalala",
+            trx_df=None, eth_df = None, layer=None,time_col = "Date")
     sys.exit(app.exec_())

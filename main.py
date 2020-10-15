@@ -1,27 +1,42 @@
 import sys
 import traceback
 import openpyxl
-from PyQt5 import QtWidgets, QtCore, QtGui
-from ui_Mainwindow import Ui_MainWindow
+from PyQt5 import QtWidgets, QtCore, QtGui, uic
 import mpl_cls
 import pymongo
-import collections
 import util
 import pandas as pd
-import re
-from sub_tab import Sub_tab
 import os
 import db_operator
+from cluster_definition_widget import Cluster_definition_widget
+from ui_mainwindow import Ui_MainWindow
 
 pd.options.display.max_columns = None
 pd.options.display.max_rows = None
 
 MONGO_CLIENT_URL = "mongodb://localhost:27017/"
-DB_NAME = "mydatabase"
-AUTO_COMPLETE_LENGTH = 5
-PERMANENT_SUBTAB_NO = 3
+AUTO_COMPLETE_LENGTH = 2
 CHARTS_TAB_NAMES = {"HUAWEI2G_Hourly_tab", "HUAWEI2G_Daily_tab", "HUAWEI4G_Hourly_tab", "HUAWEI4G_Daily_tab",
                     "HUAWEI5G_Hourly_tab", "HUAWEI5G_Daily_tab"}
+
+GSM_DB = "GSM_TEST_DB"
+GSM_CELL_NAMES_COL = "GSM_CELL_NAMES"
+GSM_SITE_NAMES_COL = "GSM_SITE_NAMES"
+
+LTE_DB = "LTE_TEST_DB"
+LTE_CELL_NAMES_COL = "LTE_CELL_NAMES"
+LTE_ENODEB_NAMES_COL = "LTE_ENODEB_NAMES"
+
+NR_DB = "NR_TEST_DB"
+NR_CELL_NAMES_COL = "NR_CELL_NAMES"
+NR_GNODEB_NAMES_COL = "NR_GNODEB_NAMES"
+
+EP_DB_NAME = "EP"
+LTE_EP_COL_NAME = "LTE_EP"
+CLUTSER_COL_NAME = "CLUSTERS"
+
+
+# Ui_MainWindow, QtBaseClass = uic.loadUiType("Mainwindow.ui")
 
 
 class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
@@ -31,6 +46,24 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.not_init = True
         self.MONGO_CLIENT_URL = MONGO_CLIENT_URL
         self.reload_template_file("template.xlsx")
+        self.pre_load()
+
+    def pre_load(self):
+        myclient = pymongo.MongoClient(MONGO_CLIENT_URL)
+        mydb = myclient[EP_DB_NAME]
+        mycol = mydb[CLUTSER_COL_NAME]
+        # load cluster definition
+        self.cluster_def = pd.DataFrame(list(mycol.find({}, {"_id": 0})))
+        self.cluster_def.sort_index(axis=1, inplace=True)
+        self.cluster_combo_box.clear()
+        self.cluster_combo_box.addItems(sorted(self.cluster_def["Cluster"].unique()))
+
+        # load auto_complete values
+        self.auto_completer_dict = {}
+        for _, row in self.auto_completer_Config.iterrows():
+            self.auto_completer_dict[row["tab_name"], row["data_level"]] = set(
+                [d["_id"] for d in myclient[row["db_name"]][row["collection_name"]].find()])
+        myclient.close()
 
     def reload_template_file(self, filename):
         if self.not_init == True:
@@ -58,11 +91,12 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def init(self):
         self.mongo_client = pymongo.MongoClient(self.MONGO_CLIENT_URL)
         self.cell_line_edit_autocompleter = QtWidgets.QCompleter()
-        self.cell_line_edit_autocompleter_model = QtGui.QStandardItemModel()
+        self.cell_line_edit_autocompleter_model = QtCore.QStringListModel()
         self.cell_line_edit_autocompleter.setModel(self.cell_line_edit_autocompleter_model)
         self.cell_line_edit.setCompleter(self.cell_line_edit_autocompleter)
+
         self.site_line_edit_autocompleter = QtWidgets.QCompleter()
-        self.site_line_edit_autocompleter_model = QtGui.QStandardItemModel()
+        self.site_line_edit_autocompleter_model = QtCore.QStringListModel()
         self.site_line_edit_autocompleter.setModel(self.site_line_edit_autocompleter_model)
         self.site_line_edit.setCompleter(self.site_line_edit_autocompleter)
 
@@ -122,7 +156,6 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.conditional_kpi = df
             if ws.title == "auto_completer_Config":
                 self.auto_completer_Config = pd.read_excel(filename, sheet_name=ws.title)
-                self.auto_completer_Config = self.auto_completer_Config.set_index(["tab_name", "data_level"])
             if ws.title == "query_config":
                 self.query_config = pd.read_excel(filename, sheet_name=ws.title)
             # if ws.title == "small_legend_config":
@@ -133,7 +166,6 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             #     # self.small_legend_config["bbox_to_anchor"] = eval(self.small_legend_config["bbox_to_anchor"])
             #     # self.small_legend_config["ncol"] = int(self.small_legend_config["ncol"])
             #     self.small_legend_config["fontsize"] = str(self.small_legend_config["fontsize"])
-
 
     def build_tab_widgets(self):
         '''
@@ -154,34 +186,24 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 ind += 1
                 self.scrollaleChartsAreas[tab_name1, tab_name2] = tab2
 
-                # tab2 = QtWidgets.QWidget(tab1)
-                # sc = mpl_cls.ScrollaleChartsArea(tab2)
-                # layout = QtWidgets.QHBoxLayout()
-                # layout.addWidget(sc)
-                # layout.setContentsMargins(0, 0, 0, 0)
-                # tab2.setLayout(layout)
-                # tab2.sc=sc
-                # tab1.insertTab(ind,tab2, tab_name2)
-
-                # tab2 = mpl_cls.ScrollaleChartsArea(tab1)
-                # tab2.setObjectName(tab_name2)
-                # tab1.insertTab(ind, tab2, tab_name2)
-                # self.scrollaleChartsAreas[tab_name1, tab_name2] = tab2
-
-            # for i in range(tab1.count()):
-            #     tab = tab1.widget(i)
-            #     tab_name2 = tab.objectName()
-            #     self.sub_tabs[tab_name1, tab_name2] = tab
-
     def connect(self):
         self.actionExport_All_CHarts_to_Excel.triggered.connect(self.export_all_charts_to_excel)
         self.actionReload_Template.triggered.connect(self.reload_template_file)
+        self.actionCluster_Definition.triggered.connect(self.show_cluster_definition_widget)
         self.query_push_btn.clicked.connect(self.on_query_push_btn_clicked)
         self.tabwidget_level1.currentChanged.connect(self.on_tabwidget_level1_currentChanged)
         self.cell_line_edit.textEdited.connect(self.on_cell_line_edit_textEdited)
         self.site_line_edit.textEdited.connect(self.on_site_line_edit_textEdited)
+        self.site_line_edit.textChanged.connect(self.on_site_line_edit_textChanged)
 
     # QtCore.QMetaObject.connectSlotsByName(self)
+
+    def show_cluster_definition_widget(self):
+        self.cluster_definition_widget = Cluster_definition_widget(df=self.cluster_def, mongo_client=self.mongo_client,
+                                                                   EP_DB_NAME=EP_DB_NAME,
+                                                                   CLUTSER_COL_NAME=CLUTSER_COL_NAME,
+                                                                   mainwindow=self)
+        self.cluster_definition_widget.show()
 
     def export_all_charts_to_excel(self):
         print("todo")
@@ -191,34 +213,46 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             sc.recreate()
 
     def on_query_push_btn_clicked(self):
-        #todo 2g cluster layer
         if self.cell_radio_btn.isChecked():
             data_level = "Cell"
             column_value = self.cell_line_edit.text().strip()
+            key_values = [column_value]
         elif self.site_radio_btn.isChecked():
             data_level = "Site"
             column_value = self.site_line_edit.text().strip()
-
+            key_values = [column_value]
         elif self.cluster_radio_btn.isChecked():
             data_level = "Cluster"
+            column_value = self.cluster_combo_box.currentText()
 
         tab1 = self.tabwidget_level1.currentWidget()
         tab1_name = tab1.objectName()
         if tab1_name in CHARTS_TAB_NAMES:
             self.statusbar.showMessage("Loading Data from Server")
+            self.statusbar.repaint()
             for tech in ("2G", "4G", "5G"):
                 if tech in tab1_name:
                     break
 
+            if data_level=="Cluster":
+                if tech in ("2G", "4G"):
+                    key_values = list(set(self.cluster_def[self.cluster_def["Cluster"] == column_value]["Site"]))
+                elif tech == "5G":
+                    key_values = list(set(
+                        [site + "N" for site in self.cluster_def[self.cluster_def["Cluster"] == column_value]["Site"]]))
+                print(key_values)
+            else:
+                key_values==[column_value]
+
             if "Hourly" in tab1_name:
                 time_level = "Hourly"
-                time_col="Time"
+                time_col = "Time"
                 st = self.start_date_time_edit.dateTime().toPyDateTime()
                 end = self.end_date_time_edit.dateTime().toPyDateTime()
 
             if "Daily" in tab1_name:
                 time_level = "Daily"
-                time_col="Date"
+                time_col = "Date"
                 st = self.start_date_edit.dateTime().toPyDateTime()
                 end = self.end_date_edit.dateTime().toPyDateTime()
 
@@ -226,12 +260,15 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             project = set()
             config_df = self.charts_config.get(tab1_name, pd.DataFrame())
             if config_df.empty == False:
-                #get data
+                # get data
                 for tab2_name in config_df["Tab"].unique():
                     self.scrollaleChartsAreas[tab1_name, tab2_name].recreate()
                 for kpis in config_df["Kpis"]:
                     for kpi in kpis:
                         project.add(kpi)
+                layer = None
+                if tech == "4G":
+                    layer = self.layer_combo_box.currentText()
 
                 data_collector = db_operator.Data_collector(MONGO_CLIENT_URL=self.MONGO_CLIENT_URL, tech=tech,
                                                             data_level=data_level, time_level=time_level,
@@ -239,23 +276,25 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                                                             additional_kpi=self.additional_kpi,
                                                             conditional_kpi=self.conditional_kpi,
                                                             start_time=st, end_time=end, project=project,
-                                                            key_values=[column_value], query_config=self.query_config,
+                                                            key_values=key_values, query_config=self.query_config,
+                                                            layer=layer, cluster=column_value
                                                             )
                 data_collector.query_data()
-                # print(data_collector.final_df)
-                if data_collector.final_df.empty:
+                ori_dfs = data_collector.ori_dfs
+                data_df = data_collector.final_df
+                trx_df = ori_dfs.get("trx_df", None)
+                eth_df = ori_dfs.get("eth_df", None)
+                if data_df.empty:
                     self.show_error_message("No data for {}".format(column_value))
                     self.statusbar.showMessage("No data for {}".format(column_value))
-
                 else:
                     # plot
                     # print(data_collector.final_df.columns.values)
                     for tab2_name in config_df["Tab"].unique():
-                        tab_config_df=config_df[config_df["Tab"]==tab2_name]
-                        sc=self.scrollaleChartsAreas[tab1_name,tab2_name]
-                        sc.plot(tab_config_df,data_collector.final_df,data_level,column_value,time_col)
+                        tab_config_df = config_df[config_df["Tab"] == tab2_name]
+                        sc = self.scrollaleChartsAreas[tab1_name, tab2_name]
+                        sc.plot(tab_config_df, data_df, data_level, column_value, time_col, trx_df, eth_df, layer)
                     self.statusbar.showMessage("Query finished")
-
 
     def on_tabwidget_level1_currentChanged(self, i):
         tab_name = self.tabwidget_level1.widget(i).objectName()
@@ -273,38 +312,41 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.end_date_time_edit.hide()
             self.start_date_edit.show()
             self.end_date_edit.show()
+        if "4G" in tab_name and len(self.site_line_edit.text()) == 5:
+            self.layer_combo_box.setEnabled(True)
+        else:
+            self.layer_combo_box.setEnabled(False)
 
     # autocomplete on cell line edit
     def on_cell_line_edit_textEdited(self, s):
         arr = []
         tab_name = self.tabwidget_level1.currentWidget().objectName()
-        if tab_name in CHARTS_TAB_NAMES and len(s) >= 2:
+        if tab_name in CHARTS_TAB_NAMES and len(s) >= AUTO_COMPLETE_LENGTH:
             data_level = "Cell"
-            row = self.auto_completer_Config.loc[tab_name, data_level]
-            db_name, collection_name = row["db_name"], row["collection_name"]
-            if pd.notnull(db_name) and pd.notnull(collection_name):
-                mycol = self.mongo_client[db_name][collection_name]
-                query = {"_id": re.compile("^{}".format(s), re.IGNORECASE)}
-                arr = [d["_id"] for d in mycol.find(query, sort=[("_id", 1)])]
-        self.cell_line_edit_autocompleter_model.clear()
-        for text in arr:
-            self.cell_line_edit_autocompleter_model.appendRow(QtGui.QStandardItem(text))
+            arr = sorted([x for x in self.auto_completer_dict[tab_name, data_level] if x.startswith(s)])
+        self.cell_line_edit_autocompleter_model.setStringList(arr)
 
     # autocomplete on site line edit
     def on_site_line_edit_textEdited(self, s):
         arr = []
         tab_name = self.tabwidget_level1.currentWidget().objectName()
-        if tab_name in CHARTS_TAB_NAMES and len(s) >= 2:
+        if tab_name in CHARTS_TAB_NAMES and AUTO_COMPLETE_LENGTH <= len(s) <= 20:
             data_level = "Site"
-            row = self.auto_completer_Config.loc[tab_name, data_level]
-            db_name, collection_name = row["db_name"], row["collection_name"]
-            if pd.notnull(db_name) and pd.notnull(collection_name):
-                mycol = self.mongo_client[db_name][collection_name]
-                query = {"_id": re.compile("^{}".format(s), re.IGNORECASE)}
-                arr = [d["_id"] for d in mycol.find(query, sort=[("_id", 1)])]
-        self.site_line_edit_autocompleter_model.clear()
-        for text in arr:
-            self.site_line_edit_autocompleter_model.appendRow(QtGui.QStandardItem(text))
+            arr = sorted([x for x in self.auto_completer_dict[tab_name, data_level] if x.startswith(s)])
+        self.site_line_edit_autocompleter_model.setStringList(arr)
+
+    def on_site_line_edit_textChanged(self, s):
+        tab_name = self.tabwidget_level1.currentWidget().objectName()
+        if tab_name in CHARTS_TAB_NAMES and "4G" in tab_name and len(s) == 5:
+            mycol = self.mongo_client[EP_DB_NAME][LTE_EP_COL_NAME]
+            query = {"eNodeB Name": s}
+            arr = sorted(set([d["layer"] for d in mycol.find(query) if pd.notnull(d["layer"])] + ["All Site"]))
+            self.layer_combo_box.setEnabled(True)
+            self.layer_combo_box.clear()
+            self.layer_combo_box.addItems(arr)
+            self.layer_combo_box.setCurrentText("All Site")
+        else:
+            self.layer_combo_box.setEnabled(False)
 
     def contextMenuEvent(self, event):
         contextMenu = QtWidgets.QMenu(self)
@@ -316,8 +358,8 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def closeEvent(self, event):
         self.mongo_client.close()
 
-    def show_error_message(self,s):
-        em=QtWidgets.QErrorMessage(self)
+    def show_error_message(self, s):
+        em = QtWidgets.QErrorMessage(self)
         em.showMessage(s)
 
 

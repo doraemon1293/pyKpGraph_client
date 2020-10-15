@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'MainwindowuXUIyP.ui'
+## Form generated from reading UI file 'sub_tabnfjFFk.ui'
 ##
 ## Created by: Qt User Interface Compiler version 5.14.1
 ##
@@ -9,10 +9,10 @@
 ################################################################################
 
 from PyQt5.QtCore import (QCoreApplication, QMetaObject, QObject, QPoint,
-                          QRect, QSize, QUrl, Qt)
+    QRect, QSize, QUrl, Qt)
 from PyQt5.QtGui import (QBrush, QColor, QConicalGradient, QCursor, QFont,
-                         QFontDatabase, QIcon, QLinearGradient, QPalette, QPainter, QPixmap,
-                         QRadialGradient)
+    QFontDatabase, QIcon, QLinearGradient, QPalette, QPainter, QPixmap,
+    QRadialGradient)
 from PyQt5.QtWidgets import *
 
 
@@ -35,8 +35,6 @@ class Ui_sub_tab(object):
 
         sub_tab.setCurrentIndex(0)
 
-
-        QMetaObject.connectSlotsByName(sub_tab)
     # setupUi
 
     def retranslateUi(self, sub_tab):

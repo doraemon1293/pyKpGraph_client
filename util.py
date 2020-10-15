@@ -1,5 +1,7 @@
 import re
 import hashlib
+import matplotlib.dates as mdates
+
 def compile_formula(formula):
     if type(formula)==str:
         formula=formula.replace("\n","").replace("\r","")
@@ -41,3 +43,20 @@ def merge_dict(d1,d2):
                 d1[k]=d2[k]
 
 
+def make_format(ax1, ax2,time_col):
+    # current and other are axes
+    def format_coord(x, y):
+        # x, y are data coordinates
+        # convert to display coords
+        ax1_display_coord = ax1.transData.transform((x,y))
+        inv = ax2.transData.inverted()
+        # convert back to data coords with respect to ax
+        ax2_data_coord = inv.transform(ax1_display_coord)
+        y1=y
+        y2=ax2_data_coord[1]
+        x=mdates.num2date(x)
+        if time_col=="Date":
+            return 'x={}.{} y1={:.3f} y2={:.3f}'.format(x.day,x.month,y1,y2)
+        elif time_col=="Time":
+            return 'x={}.{} {} y1={:.3f} y2={:.3f}'.format(x.day, x.month,x.hour, y1, y2)
+    return format_coord
