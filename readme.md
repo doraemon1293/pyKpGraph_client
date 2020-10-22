@@ -5,6 +5,23 @@ date: '2020-10-16'
 ---
 
 # 项目进度
+### 1021
+- 完成 server side 上传NBR Data的功能
+
+
+### 1020
+- Add change day line
+
+### 1019
+- 把clusterDefinitionWidget改成Qdialog
+- 编写ListDialog
+
+
+### 1016
+- 编写可查询可排序的tableview
+- 完成自定义cluster功能
+
+
 
 ### 1015
 - cluster 完成
@@ -111,15 +128,17 @@ date: '2020-10-16'
 # Todo
 - [ ] Add Export charts function
 - [ ] Keep cell name & site for different tab
-- [ ] 添加Cluster支持
 - [ ] Multi-Cell
 - [ ] Worst Cell
-- [ ] Export
-- [ ] Add change day line
 - [ ] 2G TRX TAB
 - [ ] HO/NB
+- [ ] Add Export charts function
+- [ ] Multi-Cell
+- [ ] Keep cell name & site for different tab
 
-
+- [x] server side upload NBR data
+- [x] Add change day line
+- [x] 添加Cluster支持
 - [x] 添加Layer支持
 - [x] 读取ep添加带宽+layer 信息
 - [x] Compose template for 2G/4G
