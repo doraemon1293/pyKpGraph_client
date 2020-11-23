@@ -30,6 +30,8 @@ class Ui_MainWindow(object):
         self.actionReload_Template.setObjectName(u"actionReload_Template")
         self.actionCluster_Definition = QAction(MainWindow)
         self.actionCluster_Definition.setObjectName(u"actionCluster_Definition")
+        self.actionChange_Date_Line = QAction(MainWindow)
+        self.actionChange_Date_Line.setObjectName(u"actionChange_Date_Line")
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.verticalLayout = QVBoxLayout(self.centralwidget)
@@ -112,6 +114,7 @@ class Ui_MainWindow(object):
 
         self.cluster_combo_box = QComboBox(self.centralwidget)
         self.cluster_combo_box.setObjectName(u"cluster_combo_box")
+        self.cluster_combo_box.setSizeAdjustPolicy(QComboBox.AdjustToContents)
 
         self.gridLayout.addWidget(self.cluster_combo_box, 0, 3, 1, 1)
 
@@ -167,8 +170,9 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuMenu.menuAction())
         self.menuMenu.addAction(self.actionReload_Template)
         self.menuMenu.addAction(self.actionExport_All_CHarts_to_Excel)
-        self.menuMenu.addAction(self.actionAbout)
         self.menuMenu.addAction(self.actionCluster_Definition)
+        self.menuMenu.addAction(self.actionChange_Date_Line)
+        self.menuMenu.addAction(self.actionAbout)
 
         self.retranslateUi(MainWindow)
 
@@ -182,6 +186,7 @@ class Ui_MainWindow(object):
         self.actionExport_All_CHarts_to_Excel.setText(QCoreApplication.translate("MainWindow", u"Export All CHarts to Excel", None))
         self.actionReload_Template.setText(QCoreApplication.translate("MainWindow", u"Reload Template", None))
         self.actionCluster_Definition.setText(QCoreApplication.translate("MainWindow", u"Cluster Definition", None))
+        self.actionChange_Date_Line.setText(QCoreApplication.translate("MainWindow", u"Change Date Line", None))
         self.label_3.setText(QCoreApplication.translate("MainWindow", u"Layer", None))
         self.cell_radio_btn.setText(QCoreApplication.translate("MainWindow", u"Cell", None))
         self.cluster_radio_btn.setText(QCoreApplication.translate("MainWindow", u"Cluster", None))
@@ -199,4 +204,5 @@ class Ui_MainWindow(object):
         self.tabwidget_level1.setTabText(self.tabwidget_level1.indexOf(self.maitainence), QCoreApplication.translate("MainWindow", u"Maitainence", None))
         self.menuMenu.setTitle(QCoreApplication.translate("MainWindow", u"Menu", None))
     # retranslateUi
+
 

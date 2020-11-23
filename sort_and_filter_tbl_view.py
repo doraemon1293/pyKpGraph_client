@@ -3,10 +3,9 @@ import traceback
 import pandas as pd
 from PyQt5.QtWidgets import QApplication, QTableView
 import PyQt5.QtWidgets as QtWidgets
-from PyQt5.QtCore import QAbstractTableModel, Qt,QSortFilterProxyModel
+from PyQt5.QtCore import QAbstractTableModel, Qt, QSortFilterProxyModel, QMetaObject, QObject
 import PyQt5.QtCore as QtCore
-
-
+import numpy as np
 
 class PandaDataFrameModel(QAbstractTableModel):
 
@@ -19,13 +18,24 @@ class PandaDataFrameModel(QAbstractTableModel):
     def rowCount(self, parent=None):
         return self.df.shape[0]
 
-    def columnCount(self, parnet=None):
+    def columnCount(self, parent=None):
         return self.df.shape[1]
 
     def data(self, index, role=Qt.DisplayRole):
         if index.isValid():
             if role == Qt.DisplayRole:
-                return str(self.df.iloc[index.row(), index.column()])
+                res=self.df.iloc[index.row(), index.column()]
+
+                if type(res)==pd.Timestamp:
+                    return res.strftime("%d-%m-%Y")
+                elif type(res)==str:
+                    return res
+                elif pd.isnull(res):
+                    return ""
+                elif int(res)==res:
+                    return str(int(res))
+                else:
+                    return "{:.6}".format(float(res))
         return None
 
     def headerData(self, col, orientation, role):
@@ -33,12 +43,12 @@ class PandaDataFrameModel(QAbstractTableModel):
             return self.df.columns[col]
         return None
 
+
 class Sort_and_filter_tbl_view(QtWidgets.QWidget):
-    def __init__(self, parent=None,df=pd.DataFrame()):
-        #init
+    def __init__(self, parent=None):
+        # init
         super(Sort_and_filter_tbl_view, self).__init__(parent)
-        #layout
-        self.df=df
+        # layout
         self.lineEdit = QtWidgets.QLineEdit(self)
         self.tbl_view = QtWidgets.QTableView(self)
         self.comboBox = QtWidgets.QComboBox(self)
@@ -50,24 +60,36 @@ class Sort_and_filter_tbl_view(QtWidgets.QWidget):
         self.gridLayout.addWidget(self.label, 0, 0, 1, 1)
         self.setLayout(self.gridLayout)
 
-        #comboBox and label
-        self.comboBox.addItems([x for x in self.df.columns])
+        # comboBox and label
         self.label.setText("Wildcard Search")
 
-        #model
-        self.model = PandaDataFrameModel(self.df)
+        # model
+        self.model = PandaDataFrameModel(pd.DataFrame())
         self.tbl_view.setSortingEnabled(True)
 
-        #proxymodel
+        # proxymodel
         self.proxy_model = QSortFilterProxyModel()
         self.proxy_model.setSourceModel(self.model)
         self.proxy_model.setDynamicSortFilter(True)
         self.proxy_model.setFilterCaseSensitivity(False)
         self.tbl_view.setModel(self.proxy_model)
+        self.proxy_model.setFilterKeyColumn(0)
 
-        #connect
+        # connect
         self.lineEdit.textChanged.connect(self.on_lineEdit_textChanged)
         self.comboBox.currentIndexChanged.connect(self.on_comboBox_currentIndexChanged)
+        self.comboBox.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
+        QMetaObject.connectSlotsByName(self)
+
+    def set_df(self, df):
+        self.proxy_model.setDynamicSortFilter(False)
+        self.model.df = df
+        ind=self.comboBox.currentIndex()
+        self.comboBox.clear()
+        self.comboBox.addItems([x for x in df.columns])
+        self.comboBox.setCurrentIndex(ind)
+        self.proxy_model.setDynamicSortFilter(True)
+        self.model.layoutChanged.emit()
 
     @QtCore.pyqtSlot(str)
     def on_lineEdit_textChanged(self, text):
@@ -75,12 +97,41 @@ class Sort_and_filter_tbl_view(QtWidgets.QWidget):
         #                         QtCore.Qt.CaseInsensitive,
         #                         QtCore.QRegExp.RegExp
         #                         )
-
         self.proxy_model.setFilterWildcard(text)
 
-    @QtCore.pyqtSlot(int)
+    # @QtCore.pyqtSlot(int)
     def on_comboBox_currentIndexChanged(self, index):
         self.proxy_model.setFilterKeyColumn(index)
+
+
+
+class Sort_tbl_view(QtWidgets.QTableView):
+    def __init__(self, parent=None):
+        # init
+        super(Sort_tbl_view, self).__init__(parent)
+        # layout
+        # self.tbl_view = QtWidgets.QTableView(self)
+        # self.layout = QtWidgets.QHBoxLayout(self)
+        # self.layout.addWidget(self.tbl_view)
+        # self.setLayout(self.layout)
+
+        # model
+        self.model = PandaDataFrameModel(pd.DataFrame())
+        self.setSortingEnabled(True)
+
+        # proxymodel
+        self.proxy_model = QSortFilterProxyModel()
+        self.proxy_model.setSourceModel(self.model)
+        self.proxy_model.setDynamicSortFilter(True)
+        self.setModel(self.proxy_model)
+
+        # connect
+        QMetaObject.connectSlotsByName(self)
+
+    def set_df(self, df):
+        self.model.df = df
+        self.model.layoutChanged.emit()
+
 
 if __name__ == '__main__':
     def excepthook(exc_type, exc_value, exc_tb):
@@ -93,9 +144,9 @@ if __name__ == '__main__':
 
     sys.excepthook = excepthook
 
-    df = pd.DataFrame({'a': ['AAA', 'CCC', 'BBB','DDD'],
-                       'b': [400, 200, 100,300],
-                       'c': ['a', 'b', 'c','d']})
+    df = pd.DataFrame({'aaaaaaaaaaaa': ['1234566', '1234555', 'BBB', 'DDD'],
+                       'b': [4000, 200, 100, 300],
+                       'c': ['a', 'b', 'c', 'd']})
     app = QApplication(sys.argv)
     # model = PandaDataFrameModel(df)
     # view = QTableView()
@@ -105,6 +156,9 @@ if __name__ == '__main__':
     # view.resize(800, 600)
     # view.show()
 
-    obj=Sort_and_filter_tbl_view(df=df)
+    # obj = Sort_and_filter_tbl_view()
+    obj = Sort_tbl_view()
+
     obj.show()
+    obj.set_df(df)
     sys.exit(app.exec_())

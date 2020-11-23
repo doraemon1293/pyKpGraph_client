@@ -1,10 +1,44 @@
 ---
 title: 'pyKP项目进度日志'
 author: '黄炎'
-date: '2020-10-16'
+date: '2020-11-04'
 ---
 
 # 项目进度
+
+### 1104
+- ppo report
+  - [x] validate input
+  - [x] layout 
+  - [x] 确定ppo report 配置输入格式
+  - [ ] 输出到表格
+  - [ ] 输出图片
+
+
+### 1103
+- 完成服务器端上传isdp report的代码
+- 去掉table tab里的filter功能
+
+### 1102
+- fix a bug in cluster definition
+
+### 1030
+- 完成4G Intra HO/NB 编写
+- 完成4G IRAT 2/3G HO/NB 编写
+
+
+### 1029
+- 2G HO/NB TAB
+- 修复4g eth中的原始数据将NaN存储为0的bug
+- 修复2G NBR原始数据中将NaN存储为/0的bug
+
+### 1027
+- 解决某些field的数据被转换成string的bug
+
+### 1022
+- checkbox daybyday功能
+- 2G TRX TAB
+
 ### 1021
 - 完成 server side 上传NBR Data的功能
 
@@ -127,15 +161,18 @@ date: '2020-10-16'
 
 # Todo
 - [ ] Add Export charts function
+- [ ] Add Export table tab function
 - [ ] Keep cell name & site for different tab
 - [ ] Multi-Cell
 - [ ] Worst Cell
-- [ ] 2G TRX TAB
-- [ ] HO/NB
-- [ ] Add Export charts function
-- [ ] Multi-Cell
-- [ ] Keep cell name & site for different tab
+- [ ] ttm report
+- [ ] ppo report
+- [ ] add neighbour cluster 是不是只考虑4g/2g邻区 最多的6个站
 
+
+- [x] 2G HO/NB tab
+- [x] 4G HO/NB tab
+- [x] 2G TRX TAB
 - [x] server side upload NBR data
 - [x] Add change day line
 - [x] 添加Cluster支持
@@ -167,7 +204,7 @@ date: '2020-10-16'
 |   cell  |     X    |     X    |     X   |      X   |    X    |    X     |
 |   site  |     X    |     X    |     X   |      X   |    X    |    X     |
 | cluster |    X     |     X     |    X     |      X    |    X     |   X       |
-|  layer  |    -     |    -      |     x   |      x    |    -    |     -    |
+|  layer  |    -     |    -      |     X   |     X    |    -    |     -    |
 
 # Notes
 - Qual & MCS	12	DL ReTXN Shares	QPSK 原公式错误

@@ -28,7 +28,7 @@ class My_test_main_window(QtWidgets.QMainWindow):
         super(My_test_main_window, self).__init__(None)
         self.load_config("template_test.xlsx")
         dr = pd.date_range(start=datetime.datetime(2020, 7, 23),
-                           end=datetime.datetime(2020, 7, 23, 12, 0), freq="H")
+                           end=datetime.datetime(2020, 7, 30), freq="D")
         self.data_df = pd.DataFrame({"Cell Name": ["cell1"] * len(dr),
                                      "Date": dr,
                                      "A": [math.sin(x) for x in range(1, len(dr) + 1)],
@@ -45,6 +45,7 @@ class My_test_main_window(QtWidgets.QMainWindow):
 
                                      }
                                     )
+
 
     def load_config(self, filename):
         '''
@@ -125,6 +126,8 @@ if __name__ == "__main__":
     sc = ScrollaleChartsArea(my_test_main_window)
     my_test_main_window.setCentralWidget(sc)
     my_test_main_window.show()
-    sc.plot(my_test_main_window.charts_config, my_test_main_window.data_df, data_level="Cell", column_value="lalala",
-            trx_df=None, eth_df = None, layer=None,time_col = "Date")
+    sc.plot(my_test_main_window.charts_config, my_test_main_window.data_df, agg_level="Cell", column_value="lalala",
+            trx_df=None, eth_df = None, layer=None, time_col = "Date", change_day_lines=[datetime.date(2020,7,25),
+                                                                                       datetime.date(2020,7,26),
+                                                                                       datetime.date(2020,7,27)])
     sys.exit(app.exec_())

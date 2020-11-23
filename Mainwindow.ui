@@ -102,7 +102,11 @@
        </widget>
       </item>
       <item row="0" column="3">
-       <widget class="QComboBox" name="cluster_combo_box"/>
+       <widget class="QComboBox" name="cluster_combo_box">
+        <property name="sizeAdjustPolicy">
+         <enum>QComboBox::AdjustToContents</enum>
+        </property>
+       </widget>
       </item>
      </layout>
     </item>
@@ -179,8 +183,9 @@
     </property>
     <addaction name="actionReload_Template"/>
     <addaction name="actionExport_All_CHarts_to_Excel"/>
-    <addaction name="actionAbout"/>
     <addaction name="actionCluster_Definition"/>
+    <addaction name="actionChange_Date_Line"/>
+    <addaction name="actionAbout"/>
    </widget>
    <addaction name="menuMenu"/>
   </widget>
@@ -203,6 +208,11 @@
   <action name="actionCluster_Definition">
    <property name="text">
     <string>Cluster Definition</string>
+   </property>
+  </action>
+  <action name="actionChange_Date_Line">
+   <property name="text">
+    <string>Change Date Line</string>
    </property>
   </action>
  </widget>
