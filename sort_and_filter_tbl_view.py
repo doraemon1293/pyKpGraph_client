@@ -7,6 +7,7 @@ from PyQt5.QtCore import QAbstractTableModel, Qt, QSortFilterProxyModel, QMetaOb
 import PyQt5.QtCore as QtCore
 import numpy as np
 
+
 class PandaDataFrameModel(QAbstractTableModel):
 
     def __init__(self, df):
@@ -24,15 +25,17 @@ class PandaDataFrameModel(QAbstractTableModel):
     def data(self, index, role=Qt.DisplayRole):
         if index.isValid():
             if role == Qt.DisplayRole:
-                res=self.df.iloc[index.row(), index.column()]
+                res = self.df.iloc[index.row(), index.column()]
 
-                if type(res)==pd.Timestamp:
+                if type(res) == pd.Timestamp:
                     return res.strftime("%d-%m-%Y")
-                elif type(res)==str:
+                elif type(res) == str:
                     return res
                 elif pd.isnull(res):
                     return ""
-                elif int(res)==res:
+                elif res in (float("inf"), -float("inf")):
+                    return str(res)
+                elif int(res) == res:
                     return str(int(res))
                 else:
                     return "{:.6}".format(float(res))
@@ -84,7 +87,7 @@ class Sort_and_filter_tbl_view(QtWidgets.QWidget):
     def set_df(self, df):
         self.proxy_model.setDynamicSortFilter(False)
         self.model.df = df
-        ind=self.comboBox.currentIndex()
+        ind = self.comboBox.currentIndex()
         self.comboBox.clear()
         self.comboBox.addItems([x for x in df.columns])
         self.comboBox.setCurrentIndex(ind)
@@ -102,7 +105,6 @@ class Sort_and_filter_tbl_view(QtWidgets.QWidget):
     # @QtCore.pyqtSlot(int)
     def on_comboBox_currentIndexChanged(self, index):
         self.proxy_model.setFilterKeyColumn(index)
-
 
 
 class Sort_tbl_view(QtWidgets.QTableView):

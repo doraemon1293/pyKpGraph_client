@@ -119,7 +119,7 @@
        </sizepolicy>
       </property>
       <property name="currentIndex">
-       <number>3</number>
+       <number>0</number>
       </property>
       <property name="documentMode">
        <bool>true</bool>
@@ -154,7 +154,7 @@
         <string>5G_Hourly</string>
        </attribute>
       </widget>
-      <widget class="QWidget" name="report">
+      <widget class="Sub_tab" name="report">
        <attribute name="title">
         <string>Report</string>
        </attribute>

@@ -13,15 +13,13 @@ from ui_mainwindow import Ui_MainWindow
 from list_view import ListDialog
 from table_cls import General_table
 from parameters import *
+import report_widget
 
 pd.options.display.max_columns = None
 pd.options.display.max_rows = None
 
 
 # Ui_MainWindow, QtBaseClass = uic.loadUiType("Mainwindow.ui")
-
-class plot_charts_thread(Q)
-
 
 class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
@@ -188,6 +186,11 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     tab1.insertTab(ind, tab2, tab_name2)
                     ind += 1
                     self.table_tabs[tab_name1, tab_name2] = tab2
+        self.ppo_report_widget = report_widget.Ppo_report_widget(self.ppo_config, self.query_config, self.agg_function,
+                                                                 self.additional_kpi, self.conditional_kpi,
+                                                                 self.ignore_fields)
+        self.report.clear()
+        self.report.insertTab(0,self.ppo_report_widget, "PPO Report")
 
     def connect(self):
         self.actionExport_All_CHarts_to_Excel.triggered.connect(self.export_all_charts_to_excel)

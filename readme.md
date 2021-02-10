@@ -1,11 +1,17 @@
 ---
 title: 'pyKP项目进度日志'
 author: '黄炎'
-date: '2020-11-04'
+date: '2020-12-04'
 ---
 
-# 项目进度
 
+
+
+
+
+# 项目进度
+### 1204
+全部完成
 ### 1104
 - ppo report
   - [x] validate input

@@ -31,7 +31,7 @@ def get_bandwidth_layer(row):
 class Data_collector():
     def __init__(self, MONGO_CLIENT_URL, tech, agg_level, time_level, start_time, end_time, project, key_values,
                  query_col, additional_kpi, conditional_kpi, agg_function, query_config, layer, cluster, ignore_fields,
-                 overall=False):
+                 ):
         self.MONGO_CLIENT_URL = MONGO_CLIENT_URL
         self.tech = tech
         self.agg_level = agg_level
@@ -48,7 +48,6 @@ class Data_collector():
         self.layer = layer
         self.cluster = cluster
         self.ignore_fields = ignore_fields
-        self.overall = overall
         self.set_parameters()
 
     def set_parameters(self):
@@ -84,7 +83,7 @@ class Data_collector():
         self.raw_results = self.query_database()
         self.raw_dfs = self.trans_results_to_data_frame()
         self.final_df = self.aggregation()
-        pickle.dump((self.raw_results, self.raw_dfs, self.final_df), open("db_operator.tmp", "wb"))
+        # pickle.dump((self.raw_results, self.raw_dfs, self.final_df), open("db_operator.tmp", "wb"))
         return self.final_df
 
     def query_database(self):
@@ -105,9 +104,11 @@ class Data_collector():
         for prefix in self.collection_prefix:
             for time_ in self.time_range:
                 collection_name = prefix + time_.strftime(self.date_format)
+                # print(collection_name)
                 mycol = myclient[self.db_name][collection_name]
                 for doc in mycol.find({self.query_col: {"$in": self.key_values}}, project):
                     results.append(doc)
+        print(self.query_col,self.key_values,len(results))
         myclient.close()
         return results
 
@@ -173,18 +174,18 @@ class Data_collector():
 
         if self.tech == "2G":
             cell_df = pd.DataFrame(res_with_cell_name.values())
-            cell_df = self.fill_na_for_missing_row_ans_sort(cell_df, ["Cell Name"])
+            # cell_df = self.fill_na_for_missing_row_ans_sort(cell_df, ["Cell Name"])
             trx_df = pd.DataFrame(res_with_trx.values())
-            trx_df = self.fill_na_for_missing_row_ans_sort(trx_df, ["Cell Name", "TRXNo"])
+            # trx_df = self.fill_na_for_missing_row_ans_sort(trx_df, ["Cell Name", "TRXNo"])
             nbr_df = pd.DataFrame(res_with_nbr.values())
             res = {"cell_df": cell_df, "trx_df": trx_df, "nbr_df": nbr_df}
         elif self.tech == "4G":
             cell_df = pd.DataFrame(res_with_cell_name.values())
-            cell_df = self.fill_na_for_missing_row_ans_sort(cell_df, ["Cell Name"])
+            # cell_df = self.fill_na_for_missing_row_ans_sort(cell_df, ["Cell Name"])
             eth_df = pd.DataFrame(res_with_eth.values())
-            eth_df = self.fill_na_for_missing_row_ans_sort(eth_df, ["eNodeB Name", "Port No"])
+            # eth_df = self.fill_na_for_missing_row_ans_sort(eth_df, ["eNodeB Name", "Port No"])
             bbu_df = pd.DataFrame(res_with_bbu.values())
-            bbu_df = self.fill_na_for_missing_row_ans_sort(bbu_df, ["eNodeB Name", "Slot No_"])
+            # bbu_df = self.fill_na_for_missing_row_ans_sort(bbu_df, ["eNodeB Name", "Slot No_"])
             gsm_nbr_df = pd.DataFrame(res_with_2gnbr.values())
             umts_nbr_df = pd.DataFrame(res_with_3gnbr.values())
             lte_nbr_df = pd.DataFrame(res_with_4gnbr.values())
@@ -193,7 +194,7 @@ class Data_collector():
                    "umts_nbr_df": umts_nbr_df, "lte_nbr_df": lte_nbr_df}
         elif self.tech == "5G":
             cell_df = pd.DataFrame(res_with_cell_name.values())
-            cell_df = self.fill_na_for_missing_row_ans_sort(cell_df, ["Cell Name"])
+            # cell_df = self.fill_na_for_missing_row_ans_sort(cell_df, ["Cell Name"])
             res = {"cell_df": cell_df}
         # 将除了不需转化成数字的列都转化成数字
         for k, df in res.items():
@@ -206,7 +207,9 @@ class Data_collector():
         if self.agg_level == "Cluster":
             for df in self.raw_dfs.values():
                 df["Cluster"] = self.cluster
-
+        if self.agg_level == "Overall":
+            for df in self.raw_dfs.values():
+                df["Overall"] = "Overall"
         df = self.raw_dfs["cell_df"]
         if df.empty:
             return df
@@ -218,11 +221,7 @@ class Data_collector():
         if self.tech == "4G":
             df = df.apply(get_bandwidth_layer, axis=1)
 
-        # add additional kpi
-        for index, row in self.additional_kpi.iterrows():
-            if self.tech in row["tech"] and self.agg_level in row["agg_level"] and self.time_level in row[
-                "time_level"]:
-                df[row["kpi_name"]] = eval(row["Formula"])
+
 
         # add gp
         df["GP"] = self.gp
@@ -232,19 +231,19 @@ class Data_collector():
             if self.tech in row["tech"] and self.agg_level in row["agg_level"] and self.time_level in row[
                 "time_level"]:
                 df.loc[df[row["condition_kpi"]] == row["condition_value"], row["kpi_name"]] = eval(row["Formula"])
-        if self.agg_level == "Cluster":
-            self.key_col = "Cluster"
+
         # aggregate
 
         if self.agg_level == "Cell":
             if self.tech == "2G":
                 trx_df = self.raw_dfs["trx_df"]
                 df1 = self.agg_df(trx_df)
-                return self.merge_df(df, df1)
+                res=self.merge_df(df, df1)
+                return res
             else:
                 return df
         else:
-            if self.agg_level == "Site" or self.agg_level == "Cluster":
+            if self.agg_level == "Site" or self.agg_level == "Cluster" or self.agg_level=="Overall":
                 if self.tech == "2G":
                     df = self.agg_df(df)
                     trx_df = self.raw_dfs["trx_df"]
@@ -261,6 +260,11 @@ class Data_collector():
                     bbu_df = self.agg_df(bbu_df)
                     df = self.merge_df(df, eth_df)
                     df = self.merge_df(df, bbu_df)
+                    # calculate additional kpi
+                    for index, row in self.additional_kpi.iterrows():
+                        if self.tech in row["tech"] and self.agg_level in row["agg_level"] and self.time_level in row[
+                            "time_level"]:
+                            df[row["kpi_name"]] = eval(row["Formula"])
                     return df
                 elif self.tech == "5G":
                     df = self.agg_df(df)
@@ -292,15 +296,21 @@ class Data_collector():
                     agg[k] = self.agg_function[k]
                 else:
                     agg[k] = lambda x: x.sum(min_count=1)
-        df = df.groupby([self.time_col, self.key_col], as_index=False, dropna=False).agg(agg)
-        df.sort_values(by=self.time_col, inplace=True)
+        if self.agg_level=="Overall":
+            df = df.groupby([self.key_col],as_index=False, dropna=False).agg(agg)
+        else:
+            df = df.groupby([self.time_col, self.key_col], as_index=False, dropna=False).agg(agg)
+            df.sort_values(by=self.time_col, inplace=True)
         return df
 
     def merge_df(self, df, df1):
         if df.empty or df1.empty:
             return df
-        merged_df = df.merge(df1, how="outer", on=[self.time_col, self.key_col])
-        merged_df.sort_values(by=self.time_col, inplace=True)
+        if self.agg_level=="Overall":
+            merged_df = df.merge(df1, how="outer", on=[self.key_col])
+        else:
+            merged_df = df.merge(df1, how="outer", on=[self.time_col, self.key_col])
+            merged_df.sort_values(by=self.time_col, inplace=True)
         return merged_df
 
     # def sort_if_not_empty(self, df):

@@ -147,7 +147,7 @@ class Ui_MainWindow(object):
         self.HUAWEI5G_Hourly_tab = Sub_tab()
         self.HUAWEI5G_Hourly_tab.setObjectName(u"HUAWEI5G_Hourly_tab")
         self.tabwidget_level1.addTab(self.HUAWEI5G_Hourly_tab, "")
-        self.report = QWidget()
+        self.report = Sub_tab()
         self.report.setObjectName(u"report")
         self.tabwidget_level1.addTab(self.report, "")
         self.maitainence = QWidget()
@@ -176,7 +176,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
 
-        self.tabwidget_level1.setCurrentIndex(3)
+        self.tabwidget_level1.setCurrentIndex(0)
 
     # setupUi
 

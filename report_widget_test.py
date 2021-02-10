@@ -73,8 +73,9 @@ class Report_widget_tester():
 
         sys.excepthook = excepthook
         app = QtWidgets.QApplication([])
-        self.ppo_report_widget = report_widget.Ppo_report_widget(self.ppo_config, self.query_config,self.agg_function,
-                                                                 self.additional_kpi, self.conditional_kpi,self.ignore_fields)
+        self.ppo_report_widget = report_widget.Ppo_report_widget(self.ppo_config, self.query_config, self.agg_function,
+                                                                 self.additional_kpi, self.conditional_kpi,
+                                                                 self.ignore_fields)
         self.ppo_report_widget.show()
         sys.exit(app.exec_())
 
