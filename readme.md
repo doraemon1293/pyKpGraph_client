@@ -3,6 +3,32 @@ title: 'pyKP项目进度日志'
 author: '黄炎'
 date: '2020-12-04'
 ---
+# Description
+- This is a multi-user, server/client decoupled program can visualise sites kpi and generate pre/post report.
+- It supports query data in various granularity (cell/site/carrier/cluster & hour/days)
+- The charts/ definition of cluster can be fully customised, you can create your own template without knowledge of programming. 
+- The authority of user can be managed from server side.
+- The server side supports to create elastic multiple instance by sharding and cache. It can respond quickly even if the data increases to large scale (at least test passed with 4TB)   
+
+Tech Stack:
+Server Side: Mongodb Pandas
+Client Side: Pyqt Pandas Matplotlib Openpyxl Mongodb
+
+# Screetshots 
+>All the data are randomised generated and only for demo.
+
+- General Interface
+![](./img/23bd0fdc.png)
+
+- ALl the kpi /formula and the way to visualise can be customised by editing the excel template file(name and formula are blurred for confidentiality)
+![](./img/ec6ce601.png)
+
+- Define your own cluster
+![](./img/fc65359c.png)
+
+- Pre/Post report
+![](./img/7a3a6cb3.png)
+![](./img/a4a785f0.png)
 
 
 
@@ -12,6 +38,7 @@ date: '2020-12-04'
 # 项目进度
 ### 1204
 全部完成
+
 ### 1104
 - ppo report
   - [x] validate input
